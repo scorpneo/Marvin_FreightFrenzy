@@ -40,7 +40,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  */
 
 
-@TeleOp(name="Sgp_Manual", group="Manual mode")
+@TeleOp(name="Mrv_Manual", group="Manual mode")
 // @Disabled
 public class Mrv_Manual extends LinearOpMode {
     // Declare OpMode members.
@@ -54,16 +54,23 @@ public class Mrv_Manual extends LinearOpMode {
     private boolean rampUp = true;
     private double speedAdjust = 10;
     private ElapsedTime runtime = new ElapsedTime();
-    private double position = (RANGE[1] - RANGE[0]) / 2;
-    private double Wrist_pos = (RANGE[1] - RANGE[0]) / 2;
-    private double Finger_pos = RANGE[0];
-    double Arm_Power = 0;
-    double maxArm_Power = 0.5;
-    double shooter_power = 0.1;
-    double intake_power = 0.9;
-    double Pusher_Pos = 0;
-    boolean shooterOn = false;
-    boolean intakeOn = false;
+    //private double position = (RANGE[1] - RANGE[0]) / 2;
+   // private double Wrist_pos = (RANGE[1] - RANGE[0]) / 2;
+    //private double Finger_pos = RANGE[0];
+    //double Arm_Power = 0;
+    //double maxArm_Power = 0.5;
+    //double shooter_power = 0.1;
+    double duck_power = 0.1;
+
+    int DuckPowerDir = 1;
+
+    //double intake_power = 0.9;
+    //double Pusher_Pos = 0;
+    //boolean shooterOn = false;
+    //boolean intakeOn = false;
+    boolean DuckOn = false;
+
+
 
     @Override
     public void runOpMode() {
@@ -73,7 +80,7 @@ public class Mrv_Manual extends LinearOpMode {
         telemetry.addData("Status", "Init Hardware");
         telemetry.update();
 
-        robot.setRunMode(Mrv_Robot.MrvMotors.ALL, DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+     //   robot.setRunMode(Mrv_Robot.MrvMotors.ALL, DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 //        robot.setRunMode(Mrv_Robot.MrvMotors.ALL, DcMotor.RunMode.RUN_USING_ENCODER);
 
         waitForStart();
@@ -84,17 +91,18 @@ public class Mrv_Manual extends LinearOpMode {
 
         while (opModeIsActive()) {
             mrvManualDrive();
+            mrvDuckWheel();
         }
     }
 
 
     public void initMarvyn() {
         // set Arm positions
-        position = RANGE[1] - RANGE[0] / 2;
+       // position = RANGE[1] - RANGE[0] / 2;
         // robot.Shooter_Servo.setPosition(position);
 
-        telemetry.addData("Pusher Position", Pusher_Pos);
-        telemetry.addData("Status:", "Sgeophrii initialized");
+        //telemetry.addData("Pusher Position", Pusher_Pos);
+        telemetry.addData("Status:", "MAAAAAAAAAARVYN initialized ;D");
         telemetry.update();
 
         return;
@@ -119,6 +127,36 @@ public class Mrv_Manual extends LinearOpMode {
         robot.upper_left.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x) * (-speedAdjust / 10)); // 0
         robot.upper_right.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x) * (-speedAdjust / 10)); // 0
 
+        return;
+    }
+
+    public void mrvDuckWheel() {
+        //Shooter and pusher code
+        if (gamepad2.left_bumper) {
+            DuckOn = !DuckOn;
+            telemetry.addData("Duck Wheel toggle to:", DuckOn);
+            if (DuckOn) {
+                telemetry.addData("Duck Wheel:", "Spinning Clockwise" );
+                DuckPowerDir = 1;
+            }
+            sleep(500);
+        }else if (gamepad2.right_bumper) {
+            DuckOn = !DuckOn;
+            telemetry.addData("Duck Wheel toggle to:", DuckOn);
+            if (DuckOn) {
+                telemetry.addData("Duck Wheel:", "Spinning Counterclockwise" );
+                DuckPowerDir = -1;
+            }
+            sleep(500);
+        }
+
+        if (DuckOn) {
+            robot.duck_wheel.setPower(duck_power * DuckPowerDir);
+        } else {
+            robot.duck_wheel.setPower(0);
+        }
+
+               telemetry.update();
         return;
     }
 }

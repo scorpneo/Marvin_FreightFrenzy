@@ -30,6 +30,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -50,6 +51,7 @@ public class Mrv_Robot
         LOWER_LEFT,
         UPPER_RIGHT,
         LOWER_RIGHT,
+        DUCK_WHEEL,
         ALL_DRIVES,
         ALL
     }
@@ -58,6 +60,7 @@ public class Mrv_Robot
     public DcMotor upper_left = null;
     public DcMotor lower_left = null;
     public DcMotor lower_right = null;
+    public DcMotor duck_wheel = null;
     Orientation angles;
 
     /* local OpMode members. */
@@ -79,6 +82,7 @@ public class Mrv_Robot
         upper_left = hwMap.get(DcMotor.class, "Upper_Left");
         lower_left = hwMap.get(DcMotor.class, "Lower_Left");
         lower_right = hwMap.get(DcMotor.class, "Lower_Right");
+        duck_wheel = hwMap.get(DcMotor.class, "Duck_Wheel");
 
         // Acquire gyro
 
@@ -88,15 +92,16 @@ public class Mrv_Robot
         upper_right.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         lower_left.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         lower_right.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        duck_wheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
-        upper_left.setDirection(DcMotor.Direction.FORWARD);  //-
-        upper_right.setDirection(DcMotor.Direction.REVERSE); //+
-
-        lower_left.setDirection(DcMotor.Direction.FORWARD); //- used to be
-
-        lower_right.setDirection(DcMotor.Direction.REVERSE); //+ used to be
+        upper_left.setDirection(DcMotor.Direction.REVERSE);  //-
+        upper_right.setDirection(DcMotor.Direction.FORWARD); //+
+        lower_left.setDirection(DcMotor.Direction.REVERSE); //- used to be
+        lower_right.setDirection(DcMotor.Direction.FORWARD); //+ used to be
+        duck_wheel.setDirection(DcMotor.Direction.FORWARD);
 
 
     }
@@ -125,6 +130,8 @@ public class Mrv_Robot
             case LOWER_RIGHT:
                 lower_right.setMode(eMode);
                 break;
+            case DUCK_WHEEL:
+                duck_wheel.setMode(eMode);
             case ALL:
                 lower_right.setMode(eMode);
                 lower_left.setMode(eMode);
@@ -134,7 +141,7 @@ public class Mrv_Robot
         }
     }
 
-    public void setPower(SgpMotors eWhichMotor, double dPower )
+    public void setPower(MrvMotors eWhichMotor, double dPower )
     {
 
         switch (eWhichMotor){
@@ -150,6 +157,8 @@ public class Mrv_Robot
             case LOWER_RIGHT:
                 lower_right.setPower(dPower);
                 break;
+            case DUCK_WHEEL:
+                duck_wheel.setPower(dPower);
             case ALL:
                 lower_right.setPower(dPower);
                 lower_left.setPower(dPower);
@@ -159,7 +168,7 @@ public class Mrv_Robot
         }
     }
 
-    public int getCurrentPosition( SgpMotors eWhichMotor )
+    public int getCurrentPosition( MrvMotors eWhichMotor )
     {
         switch(eWhichMotor)
         {
@@ -178,7 +187,7 @@ public class Mrv_Robot
         }
     }
 
-    public void setTargetPosition( SgpMotors eWhichMotor, int iPos )
+    public void setTargetPosition( MrvMotors eWhichMotor, int iPos )
     {
         switch( eWhichMotor)
         {
@@ -201,7 +210,7 @@ public class Mrv_Robot
         }
     }
 
-    public boolean areMotorsBusy(SgpMotors eWhichMotor) {
+    public boolean areMotorsBusy(MrvMotors eWhichMotor) {
 
         switch(eWhichMotor)
         {
@@ -213,6 +222,8 @@ public class Mrv_Robot
                 return upper_right.isBusy();
             case LOWER_RIGHT: // lower right
                 return lower_right.isBusy();
+            case DUCK_WHEEL:
+                return duck_wheel.isBusy();
             case ALL_DRIVES: // All Drives
                 return lower_left.isBusy() && lower_right.isBusy() && upper_left.isBusy() && upper_right.isBusy();
             default:
