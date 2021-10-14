@@ -29,6 +29,8 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -39,7 +41,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * ToDo: Vishana/Anshul - please document what this class does
  */
 
-
+@Config
 @TeleOp(name="Mrv_Manual", group="Manual mode")
 // @Disabled
 public class Mrv_Manual extends LinearOpMode {
@@ -60,7 +62,7 @@ public class Mrv_Manual extends LinearOpMode {
     //double Arm_Power = 0;
     //double maxArm_Power = 0.5;
     //double shooter_power = 0.1;
-    double duck_power = 0.1;
+    public static double duck_power = 0.5;
 
     int DuckPowerDir = 1;
 
@@ -69,8 +71,7 @@ public class Mrv_Manual extends LinearOpMode {
     //boolean shooterOn = false;
     //boolean intakeOn = false;
     boolean DuckOn = false;
-
-
+    FtcDashboard dashboard;
 
     @Override
     public void runOpMode() {
@@ -83,6 +84,7 @@ public class Mrv_Manual extends LinearOpMode {
      //   robot.setRunMode(Mrv_Robot.MrvMotors.ALL, DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 //        robot.setRunMode(Mrv_Robot.MrvMotors.ALL, DcMotor.RunMode.RUN_USING_ENCODER);
 
+        dashboard = FtcDashboard.getInstance();
         waitForStart();
 
         initMarvyn();
