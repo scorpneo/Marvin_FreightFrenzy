@@ -29,6 +29,8 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import android.hardware.camera2.CameraDevice;
+
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -97,10 +99,10 @@ public class Mrv_Robot
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
-        upper_left.setDirection(DcMotor.Direction.REVERSE);  //-
-        upper_right.setDirection(DcMotor.Direction.FORWARD); //+
-        lower_left.setDirection(DcMotor.Direction.REVERSE); //- used to be
-        lower_right.setDirection(DcMotor.Direction.FORWARD); //+ used to be
+        upper_left.setDirection(DcMotor.Direction.FORWARD);  //-
+        upper_right.setDirection(DcMotor.Direction.REVERSE); //+
+        lower_left.setDirection(DcMotor.Direction.FORWARD); //- used to be
+        lower_right.setDirection(DcMotor.Direction.REVERSE); //+ used to be
         duck_wheel.setDirection(DcMotor.Direction.FORWARD);
 
 

@@ -37,6 +37,9 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
+
 /**
  * ToDo: Vishana/Anshul - please document what this class does
  */
@@ -66,6 +69,9 @@ public class Mrv_Manual extends LinearOpMode {
 
     int DuckPowerDir = 1;
 
+    public static final String VUFORIA_LICENSE_KEY = "AZRnab7/////AAABmTUhzFGJLEyEnSXEYWthkjhGRzu8klNOmOa9WEHaryl9AZCo2bZwq/rtvx83YRIgV60/Jy/2aivoXaHNzwi7dEMGoaglSVmdmzPF/zOPyiz27dDJgLVvIROD8ww7lYzL8eweJ+5PqLAavvX3wgrahkOxxOCNeKG9Tl0LkbS5R11ATXL7LLWeUv5FP1aDNgMZvb8P/u96OdOvD6D40Nf01Xf+KnkF5EXwNQKk1r7qd/hiv9h80gvBXMFqMkVgUyogwEnlK2BfmeUhGVm/99BiwwW65LpKSaLVPpW/6xqz9SyPgZ/L/vshbWgSkTB/KoERiV8MsW79RPUuQS6NTOLY32I/kukmsis3MFst5LP/d3gx";
+
+
     //double intake_power = 0.9;
     //double Pusher_Pos = 0;
     //boolean shooterOn = false;
@@ -83,8 +89,16 @@ public class Mrv_Manual extends LinearOpMode {
 
      //   robot.setRunMode(Mrv_Robot.MrvMotors.ALL, DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 //        robot.setRunMode(Mrv_Robot.MrvMotors.ALL, DcMotor.RunMode.RUN_USING_ENCODER);
+        msStuckDetectStop = 2500;
+
+        VuforiaLocalizer.Parameters vuforiaParams = new VuforiaLocalizer.Parameters(R.id.cameraMonitorViewId);
+        vuforiaParams.vuforiaLicenseKey = VUFORIA_LICENSE_KEY;
+        vuforiaParams.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
+        VuforiaLocalizer vuforia = ClassFactory.getInstance().createVuforia(vuforiaParams);
 
         dashboard = FtcDashboard.getInstance();
+        dashboard.startCameraStream(vuforia, 0);
+
         waitForStart();
 
         initMarvyn();
