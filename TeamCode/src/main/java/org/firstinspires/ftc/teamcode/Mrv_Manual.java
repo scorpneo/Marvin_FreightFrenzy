@@ -35,6 +35,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.ServoController;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -51,31 +52,31 @@ public class Mrv_Manual extends LinearOpMode {
     // Declare OpMode members.
     Mrv_Robot robot = new Mrv_Robot();
 
-    static final double SERVO_POSITION = 0.5;
-    static final double RANGE[] = {0.0, 1.0};
-    static final int CYCLE_MS = 50;
-    static final double INCREMENT = 0.25;
+    static final double INCREMENT   = 0.1;     // amount to slew servo each CYCLE_MS cycle
+    static final int    CYCLE_MS    =   50;     // period of each cycle
+    static final double[] RANGE_FULL= {0.0, 1.0};
+
+
 
     private boolean rampUp = true;
-    private double speedAdjust = 10;
+    private double speedAdjust = 5;
     private ElapsedTime runtime = new ElapsedTime();
-    //private double position = (RANGE[1] - RANGE[0]) / 2;
-   // private double Wrist_pos = (RANGE[1] - RANGE[0]) / 2;
-    //private double Finger_pos = RANGE[0];
-    //double Arm_Power = 0;
-    //double maxArm_Power = 0.5;
-    //double shooter_power = 0.1;
-    public static double duck_power = 0.5;
+
+    public static double duck_power = 0.25;
+    Servo   activeServo = null;
+    ServoController activeServoController = null;
+    DcMotor armMotor = null;
+    boolean ServoTurn = true;
+    double[] range = RANGE_FULL;
+    double  position = 0.5; // Start at halfway position
+    double increment = INCREMENT;
 
     int DuckPowerDir = 1;
 
     public static final String VUFORIA_LICENSE_KEY = "AZRnab7/////AAABmTUhzFGJLEyEnSXEYWthkjhGRzu8klNOmOa9WEHaryl9AZCo2bZwq/rtvx83YRIgV60/Jy/2aivoXaHNzwi7dEMGoaglSVmdmzPF/zOPyiz27dDJgLVvIROD8ww7lYzL8eweJ+5PqLAavvX3wgrahkOxxOCNeKG9Tl0LkbS5R11ATXL7LLWeUv5FP1aDNgMZvb8P/u96OdOvD6D40Nf01Xf+KnkF5EXwNQKk1r7qd/hiv9h80gvBXMFqMkVgUyogwEnlK2BfmeUhGVm/99BiwwW65LpKSaLVPpW/6xqz9SyPgZ/L/vshbWgSkTB/KoERiV8MsW79RPUuQS6NTOLY32I/kukmsis3MFst5LP/d3gx";
 
 
-    //double intake_power = 0.9;
-    //double Pusher_Pos = 0;
-    //boolean shooterOn = false;
-    //boolean intakeOn = false;
+
     boolean DuckOn = false;
     FtcDashboard dashboard;
 
@@ -102,12 +103,14 @@ public class Mrv_Manual extends LinearOpMode {
         waitForStart();
 
         initMarvyn();
+        robot.The_Claw.setPosition (0.5);
 
         telemetry.setAutoClear(false);
 
         while (opModeIsActive()) {
             mrvManualDrive();
             mrvDuckWheel();
+            Claw();
         }
     }
 
@@ -131,7 +134,7 @@ public class Mrv_Manual extends LinearOpMode {
             telemetry.update();
         }
 
-        if (gamepad1.dpad_right && speedAdjust <= 7) {
+        if (gamepad1.dpad_right && speedAdjust <= 10) {
             speedAdjust += 1;
             telemetry.addData("Current speed: ", "%f", speedAdjust);
             telemetry.update();
@@ -175,5 +178,39 @@ public class Mrv_Manual extends LinearOpMode {
                telemetry.update();
         return;
     }
-}
+
+    public void Claw(){
+// Connect to servo (Assume PushBot Left Hand)
+        // Change the text in quotes to match any servo name on your robot.
+
+        ServoTurn = gamepad2.right_trigger == 1f;
+
+
+
+            // slew the servo, according to the rampUp (direction) variable.
+            if (ServoTurn) {
+                // Keep stepping up until we hit the max value.
+                position += increment ;
+                if (position >= 1 ) {
+                    position = 1;
+                }
+            }
+            else {
+                // Keep stepping down until we hit the min value.
+                position -= increment ;
+                if (position <= 0 ) {
+                    position = 0;
+                }
+            }
+
+            // Set the servo to the new position and pause;
+            robot.The_Claw.setPosition(position);
+
+            telemetry.addData("RampUp", ServoTurn);
+        }
+
+
+    }
+
+
 

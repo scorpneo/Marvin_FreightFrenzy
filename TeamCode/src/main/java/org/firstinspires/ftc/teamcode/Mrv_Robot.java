@@ -29,11 +29,9 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import android.hardware.camera2.CameraDevice;
-
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -63,6 +61,8 @@ public class Mrv_Robot
     public DcMotor lower_left = null;
     public DcMotor lower_right = null;
     public DcMotor duck_wheel = null;
+    public DcMotor Linac_2 = null;
+    public Servo The_Claw = null;
     Orientation angles;
 
     /* local OpMode members. */
@@ -85,6 +85,12 @@ public class Mrv_Robot
         lower_left = hwMap.get(DcMotor.class, "Lower_Left");
         lower_right = hwMap.get(DcMotor.class, "Lower_Right");
         duck_wheel = hwMap.get(DcMotor.class, "Duck_Wheel");
+        Linac_2 = hwMap.get(DcMotor.class, "Linac_2.0");
+
+
+        //Servo
+        The_Claw = hwMap.get(Servo.class, "The_Clawww");
+
 
         // Acquire gyro
 
@@ -99,10 +105,10 @@ public class Mrv_Robot
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
-        upper_left.setDirection(DcMotor.Direction.FORWARD);  //-
-        upper_right.setDirection(DcMotor.Direction.REVERSE); //+
-        lower_left.setDirection(DcMotor.Direction.FORWARD); //- used to be
-        lower_right.setDirection(DcMotor.Direction.REVERSE); //+ used to be
+        upper_left.setDirection(DcMotor.Direction.REVERSE);  //-
+        upper_right.setDirection(DcMotor.Direction.FORWARD); //+
+        lower_left.setDirection(DcMotor.Direction.REVERSE); //- used to be
+        lower_right.setDirection(DcMotor.Direction.FORWARD); //+ used to be
         duck_wheel.setDirection(DcMotor.Direction.FORWARD);
 
 
