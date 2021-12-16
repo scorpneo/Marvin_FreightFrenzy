@@ -33,9 +33,11 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 
 import java.util.Locale;
 
@@ -68,11 +70,13 @@ public class Mrv_Robot
     public DcMotor Da_Winch = null;
     public Servo The_Claw = null;
     public Servo Wristy = null;
+    public WebcamName eyeOfSauron = NULL;
     Orientation angles;
 
     /* local OpMode members. */
     HardwareMap hwMap           =  null;
     private ElapsedTime period  = new ElapsedTime();
+    SampleMecanumDrive mecanumDrive;
 
     /* Constructor */
     public Mrv_Robot(){
@@ -122,7 +126,8 @@ public class Mrv_Robot
         Linac_2.setDirection(DcMotor.Direction.FORWARD);
         Da_Winch.setDirection(DcMotor.Direction.FORWARD);
 
-
+        mecanumDrive = new SampleMecanumDrive(hwMap);
+        eyeOfSauron = hwMap.get(WebcamName.class, "Sauron");
     }
     String formatAngle( AngleUnit angleUnit, double angle) {
         return formatDegrees(angleUnit.DEGREES.fromUnit(angleUnit, angle));

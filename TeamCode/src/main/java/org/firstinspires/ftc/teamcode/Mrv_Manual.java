@@ -40,9 +40,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 
-/**
- * ToDo: Vishana/Anshul - please document what this class does
- */
+
 
 @Config
 @TeleOp(name="Mrv_Manual", group="Manual mode")
@@ -86,12 +84,11 @@ public class Mrv_Manual extends LinearOpMode {
     public void runOpMode() {
 
         // Initialize the drive system vriables
+        // TODO: Lavanya - move all this code (before waitforstart()) to initMarvyn
         robot.init(hardwareMap);
         telemetry.addData("Status", "Init Hardware");
         telemetry.update();
 
-     //   robot.setRunMode(Mrv_Robot.MrvMotors.ALL, DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        robot.setRunMode(Mrv_Robot.MrvMotors.ALL, DcMotor.RunMode.RUN_USING_ENCODER);
         msStuckDetectStop = 2500;
 
         VuforiaLocalizer.Parameters vuforiaParams = new VuforiaLocalizer.Parameters(R.id.cameraMonitorViewId);
@@ -110,7 +107,6 @@ public class Mrv_Manual extends LinearOpMode {
         initMarvyn();
 
         telemetry.setAutoClear(false);
-
         while (opModeIsActive()) {
             mrvManualDrive();
             mrvDuckWheel();
@@ -123,11 +119,7 @@ public class Mrv_Manual extends LinearOpMode {
 
 
     public void initMarvyn() {
-        // set Arm positions
-       // position = RANGE[1] - RANGE[0] / 2;
-        // robot.Shooter_Servo.setPosition(position);
 
-        //telemetry.addData("Pusher Position", Pusher_Pos);
         telemetry.addData("Status:", "MAAAAAAAAAARVYN initialized ;D");
         telemetry.update();
 
