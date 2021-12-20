@@ -70,7 +70,7 @@ public class Mrv_Robot
     public DcMotor Da_Winch = null;
     public Servo The_Claw = null;
     public Servo Wristy = null;
-    public WebcamName eyeOfSauron = NULL;
+    public WebcamName eyeOfSauron = null;
     Orientation angles;
 
     /* local OpMode members. */
@@ -127,7 +127,7 @@ public class Mrv_Robot
         Da_Winch.setDirection(DcMotor.Direction.FORWARD);
 
         mecanumDrive = new SampleMecanumDrive(hwMap);
-        eyeOfSauron = hwMap.get(WebcamName.class, "Sauron");
+        //eyeOfSauron = hwMap.get(WebcamName.class, "Sauron");
     }
     String formatAngle( AngleUnit angleUnit, double angle) {
         return formatDegrees(angleUnit.DEGREES.fromUnit(angleUnit, angle));

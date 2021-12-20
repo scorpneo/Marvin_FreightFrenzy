@@ -31,6 +31,7 @@ package org.firstinspires.ftc.teamcode;
 
 // Robot Core
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 // Java Utils
@@ -68,6 +69,7 @@ import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 
+@Disabled
 @Config
 @Autonomous
 public class MrvFirstMove extends LinearOpMode {
@@ -79,14 +81,15 @@ public class MrvFirstMove extends LinearOpMode {
         BLUE_1,
         BLUE_2
     }
-    private static final String[] TFOD_MODEL_LABELS
+    private static final String[] TFOD_MODEL_LABELS =
     {
-        "Ball"",
+        "Ball",
         "Cube",
-        "Duck"",
+        "Duck",
         "Marker",
         "AztechTSE"
     };
+
 
     public static double xPos = 30;
     public static double yPos = 30;
@@ -95,7 +98,7 @@ public class MrvFirstMove extends LinearOpMode {
 
     private static FtcDashboard         mrvDashboard;
     private static VuforiaLocalizer     mrvVuforia;
-    private static VuforiaTrackables    mrvVuParams = null;
+    private static VuforiaTrackables    mrvVuTrackables = null;
     private TFObjectDetector            mrvTfod;
     private static Mrv_Robot            marvyn;
 
@@ -120,19 +123,17 @@ public class MrvFirstMove extends LinearOpMode {
         marvyn.init(hardwareMap);
 
         // init Dashboard
-        mrvDashboard = new FtcDashboard();
+        mrvDashboard = FtcDashboard.getInstance();
 
         // init VUFORIA
         VuforiaLocalizer.Parameters vuParams = new VuforiaLocalizer.Parameters(R.id.cameraMonitorViewId);
         vuParams.vuforiaLicenseKey = VUFORIA_LICENSE_KEY;
         vuParams.cameraName = marvyn.eyeOfSauron;
         vuParams.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
-        vuParams.useExtendedTracking = false;
+        vuParams.useExtendedTracking = false; // TODO: Do we need to tweak this?
 
         mrvVuforia = ClassFactory.getInstance().createVuforia(vuParams);
-        mrvVuParams = mrvVuforia.loadTrackablesFromAsset("FreightFrenzy");
-        List<VuforiaTrackable> allTrackables = new ArrayList<VuforiaTrackable>();
-        allTrackables.addAll(mrvVuParams);
+        mrvVuTrackables = mrvVuforia.loadTrackablesFromAsset("FreightFrenzy");
 
         // Name and locate each target on the Field
         identifyTarget(0, "Blue Storage",       -halfField,  oneAndHalfTile, mmTargetHeight, 90, 0, 90);
@@ -151,9 +152,13 @@ public class MrvFirstMove extends LinearOpMode {
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XZY, DEGREES, 90, 90, 0));
 
         // vuForia Trackables seem to need robot camera position
+        List<VuforiaTrackable> allTrackables = new ArrayList<VuforiaTrackable>();
+        allTrackables.addAll(mrvVuTrackables);
         for(VuforiaTrackable trackable : allTrackables) {
-            ((VuforiaTrackableDefaultListener) trackable.getListener()).setCameraLocationOnRobot(vuParams.cameraName, cameraLocationOnRobot)
+            ((VuforiaTrackableDefaultListener) trackable.getListener()).setCameraLocationOnRobot(vuParams.cameraName, cameraLocationOnRobot);
         }
+
+        //TODO: Set MrvLastLocation at some point before start
 
         // init Tensorflow
         int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
@@ -173,7 +178,7 @@ public class MrvFirstMove extends LinearOpMode {
 
         // Steps for Robot Autonomous execution
         // 1. Use Vuforia to detect robot's starting position (1 of 4 possible positions)
-        MrvAllianceFieldPos startingPos = MrvGetStartingPosition(mrvVuParams, mrvLastLocation);
+        MrvAllianceFieldPos startingPos = MrvGetStartingPosition(mrvVuTrackables, mrvLastLocation);
 
         // 2. Map Vuforia given field coordinates to Tensorflow screen coordinates <- hmm... maybe not.
 
@@ -183,16 +188,15 @@ public class MrvFirstMove extends LinearOpMode {
         int iLevel = MrvGetWarehouseLevel(startingPos);
 
         // 4. Generate trajectory to drop off freight drop off
-        if(startingPos = MrvAllianceFieldPos.BLUE_1 || MrvAllianceFieldPos.BLUE_2 ) {
+        if( startingPos == MrvAllianceFieldPos.BLUE_1 || startingPos == MrvAllianceFieldPos.BLUE_2) {
             // Move to BLue Shipping hub
+            // Trajectory moveTo(
 
         }
-        else if (startingPos == MrvAllianceFieldPos.RED_1 || MrvAllianceFieldPos.RED_2)
+        else if (startingPos == MrvAllianceFieldPos.RED_1 || startingPos == MrvAllianceFieldPos.RED_2)
         {
             // Move to Red Shipping hub pos
         }
-
-
 
         // 5. Follow trajectory
         // 6. Freight drop off
@@ -228,8 +232,10 @@ public class MrvFirstMove extends LinearOpMode {
         marvyn.mecanumDrive.followTrajectory(marvyn.mecanumDrive.trajectoryBuilder(MrvFirstMove.end(), true)
         .splineTo(new Vector2d(0, 0), Math.toRadians(180))
         .build());
-    };
 
+    }
+
+    //TODO: uh.. fix this thing, so it doesn't always think we are in RED_1
     MrvAllianceFieldPos MrvGetStartingPosition(VuforiaTrackables vuTargets, OpenGLMatrix lastLocation)
     {
         return MrvAllianceFieldPos.RED_1;
@@ -242,19 +248,23 @@ public class MrvFirstMove extends LinearOpMode {
             List<Recognition> updatedRecognition = mrvTfod.getUpdatedRecognitions();
             if(updatedRecognition != null) {
                 telemetry.addData("# Objects detected", updatedRecognition.size());
+                int i = 0;
                 for(Recognition recognition : updatedRecognition)
                 {
+
+                    //TODO: WHAT IS THIS??? WHAT IS THE VARIABLE I???
                     if(recognition.getLabel() == "Duck")
-                        telemetry.addData(String.format("duck detected @"));
-                        telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
+                        telemetry.addData("Objects Detected:","duck detected @");
+                        telemetry.addData("", String.format("  left,top (%d)", i), "%.03f , %.03f",
                             recognition.getLeft(), recognition.getTop());
-                        telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
+                        telemetry.addData("",String.format("  right,bottom (%d)", i), "%.03f , %.03f",
                             recognition.getRight(), recognition.getBottom());
+                        i++;
                 }
             }
             else
             {
-                telemetry.addData("No Objects detected!");
+                telemetry.addData("Objects Detected","No Objects detected!");
             }
         }
 
@@ -289,19 +299,23 @@ public class MrvFirstMove extends LinearOpMode {
     {
     }
 
-    /***
+    /*
      * Identify a target by naming it, and setting its position and orientation on the field
      * @param targetIndex
      * @param targetName
      * @param dx, dy, dz  Target offsets in x,y,z axes
      * @param rx, ry, rz  Target rotations in x,y,z axes
      */
+
+
     void    identifyTarget(int targetIndex, String targetName, float dx, float dy, float dz, float rx, float ry, float rz) {
-        VuforiaTrackable aTarget = targets.get(targetIndex);
+        VuforiaTrackable aTarget = mrvVuTrackables.get(targetIndex);
         aTarget.setName(targetName);
         aTarget.setLocation(OpenGLMatrix.translation(dx, dy, dz)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, rx, ry, rz)));
     }
-    }
+
+
+}
 
 

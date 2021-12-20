@@ -69,7 +69,10 @@ public class Mrv_Manual extends LinearOpMode {
     double[] range = RANGE_FULL;
     double  position = 0.5; // Start at halfway position
     double increment = INCREMENT;
+    public static double Wrist_Grab_Pos = 0.9;
+    public static double Wrist_Down_Pos = 0.35;
     public static double Wrist_Start_Pos = 0.3;
+
 
     int DuckPowerDir = 1;
 
@@ -239,11 +242,11 @@ public class Mrv_Manual extends LinearOpMode {
 
         if(gamepad2.left_trigger == 1f) {
             //WristStraight = !WristStraight;
-            robot.Wristy.setPosition(0.3);
+            robot.Wristy.setPosition(Wrist_Down_Pos);
         }
         else
         {
-            robot.Wristy.setPosition(0.7);
+            robot.Wristy.setPosition(Wrist_Grab_Pos);
         }
 
         return;
