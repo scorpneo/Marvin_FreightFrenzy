@@ -44,11 +44,6 @@ import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 
 import java.util.List;
 
-/**
- * ToDo: [Lavanya/Atiksh]
- *      1. Document what this class does
- *      2. Add a if(opModeIsActive()) check to function implementations *
- **/
 
 @Config
 @Autonomous(name="Red Warehouse", group="Autonomous Mode")

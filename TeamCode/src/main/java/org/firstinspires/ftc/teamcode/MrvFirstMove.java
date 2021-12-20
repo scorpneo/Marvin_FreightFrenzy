@@ -45,6 +45,7 @@ import com.acmerobotics.dashboard.config.Config;
 
 // Vuforia
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
@@ -52,6 +53,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
+import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XZY;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
@@ -115,9 +117,13 @@ public class MrvFirstMove extends LinearOpMode {
     private OpenGLMatrix mrvLastLocation   = null;
     public static Pose2d blueShippingHubPos;
     public static Pose2d redShippingHubPos;
+    public static Pose2d mrvStartingPos2d;
 
     @Override
     public void runOpMode() throws InterruptedException {
+
+        // TODO: Roadrunner tuning [Atiksh/Anshul]
+        // TODO: Update drive constants based on new parameters [Atiksh/Anshul]
 
         // init Mecanum Drive
         marvyn.init(hardwareMap);
@@ -130,7 +136,8 @@ public class MrvFirstMove extends LinearOpMode {
         vuParams.vuforiaLicenseKey = VUFORIA_LICENSE_KEY;
         vuParams.cameraName = marvyn.eyeOfSauron;
         vuParams.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
-        vuParams.useExtendedTracking = false; // TODO: Do we need to tweak this?
+        // TODO: Do we need to tweak useExtendedTracking for Vuforia? [Lavanya]
+        vuParams.useExtendedTracking = false;
 
         mrvVuforia = ClassFactory.getInstance().createVuforia(vuParams);
         mrvVuTrackables = mrvVuforia.loadTrackablesFromAsset("FreightFrenzy");
@@ -158,8 +165,6 @@ public class MrvFirstMove extends LinearOpMode {
             ((VuforiaTrackableDefaultListener) trackable.getListener()).setCameraLocationOnRobot(vuParams.cameraName, cameraLocationOnRobot);
         }
 
-        //TODO: Set MrvLastLocation at some point before start
-
         // init Tensorflow
         int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
                 "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
@@ -174,14 +179,19 @@ public class MrvFirstMove extends LinearOpMode {
             mrvTfod.setZoom(2.5, 16.0/9.0);
         }
 
+        // Startup camera
         mrvDashboard.startCameraStream(mrvVuforia, 0); // start streaming camera
 
         // Steps for Robot Autonomous execution
         // 1. Use Vuforia to detect robot's starting position (1 of 4 possible positions)
         MrvAllianceFieldPos startingPos = MrvGetStartingPosition(mrvVuTrackables, mrvLastLocation);
 
-        // 2. Map Vuforia given field coordinates to Tensorflow screen coordinates <- hmm... maybe not.
+        // Get initial pose 2D from starting pos
+        VectorF translation  = mrvLastLocation.getTranslation();
+        Orientation rotation = Orientation.getOrientation(mrvLastLocation, EXTRINSIC,XYZ, RADIANS);
+        mrvStartingPos2d = new Pose2d(translation.get(0)/mmPerInch, translation.get(1)/mmPerInch, rotation.thirdAngle);
 
+        // 2. Map Vuforia given field coordinates to Tensorflow screen coordinates <- hmm... maybe not.
         waitForStart();
 
         // 3. Use Tensorflow to read barcode and identify duck position
@@ -191,7 +201,6 @@ public class MrvFirstMove extends LinearOpMode {
         if( startingPos == MrvAllianceFieldPos.BLUE_1 || startingPos == MrvAllianceFieldPos.BLUE_2) {
             // Move to BLue Shipping hub
             // Trajectory moveTo(
-
         }
         else if (startingPos == MrvAllianceFieldPos.RED_1 || startingPos == MrvAllianceFieldPos.RED_2)
         {
@@ -235,12 +244,13 @@ public class MrvFirstMove extends LinearOpMode {
 
     }
 
-    //TODO: uh.. fix this thing, so it doesn't always think we are in RED_1
+    //TODO: Autonomous MrvGetStartingPosition [Lavanya]
     MrvAllianceFieldPos MrvGetStartingPosition(VuforiaTrackables vuTargets, OpenGLMatrix lastLocation)
     {
         return MrvAllianceFieldPos.RED_1;
     }
 
+    // TODO: Autonmous MrvGetWarehouseLevel [Lavanya]
     int MrvGetWarehouseLevel(MrvAllianceFieldPos fieldPos)
     {
         if(mrvTfod != null && opModeIsActive())
@@ -251,8 +261,6 @@ public class MrvFirstMove extends LinearOpMode {
                 int i = 0;
                 for(Recognition recognition : updatedRecognition)
                 {
-
-                    //TODO: WHAT IS THIS??? WHAT IS THE VARIABLE I???
                     if(recognition.getLabel() == "Duck")
                         telemetry.addData("Objects Detected:","duck detected @");
                         telemetry.addData("", String.format("  left,top (%d)", i), "%.03f , %.03f",
@@ -268,7 +276,7 @@ public class MrvFirstMove extends LinearOpMode {
             }
         }
 
-        // TODO: Based on ducks detected - how do we map to the level for each of these positions?
+        // Based on ducks detected - how do we map to the level for each of these positions?
         // Hint: Could we figure out the image rectangles for each of these positions and then go from there?
         //  Would we find ducks that are from the opposing Alliance's bar codes as well?
         switch(fieldPos)
@@ -285,16 +293,20 @@ public class MrvFirstMove extends LinearOpMode {
         return 0;
     }
 
+    // TODO: Autonomous Freight Drop off [Avi/Diya]
     void FreightDropOff(int level)
     {
 
     }
+
+    // TODO: Autonomous Freight Pickup [Lavanya]
 
     void FreightPickUp()
     {
 
     }
 
+    // TODO: Autonomous Spin Duck Wheel [Avi/Diya]
     void SpinDuckWheel()
     {
     }

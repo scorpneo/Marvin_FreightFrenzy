@@ -41,9 +41,6 @@ import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 
 import java.util.Locale;
 
-/**
- * ToDo: Vishruth/Satvika - please document what this class does
- */
 
 public class Mrv_Robot
 {
