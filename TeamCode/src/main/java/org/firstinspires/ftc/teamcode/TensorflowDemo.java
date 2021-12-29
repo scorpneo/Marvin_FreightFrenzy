@@ -28,6 +28,8 @@ package org.firstinspires.ftc.teamcode;
          * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
          * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
          */
+        import com.acmerobotics.dashboard.FtcDashboard;
+        import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
         import com.qualcomm.robotcore.eventloop.opmode.Disabled;
         import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
         import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -102,8 +104,13 @@ public class TensorflowDemo extends LinearOpMode {
     public void runOpMode() {
         // The TFObjectDetector uses the camera frames from the VuforiaLocalizer, so we create that
         // first.
+
+        FtcDashboard dashboard = FtcDashboard.getInstance();
+        MultipleTelemetry tele = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
+
         initVuforia();
         initTfod();
+        dashboard.startCameraStream(vuforia, 0);
 
         /**
          * Activate TensorFlow Object Detection before we wait for the start command.
@@ -122,8 +129,8 @@ public class TensorflowDemo extends LinearOpMode {
         }
 
         /** Wait for the game to begin */
-        telemetry.addData(">", "Press Play to start op mode");
-        telemetry.update();
+        tele.addData(">", "Press Play to start op mode");
+        tele.update();
         waitForStart();
 
         if (opModeIsActive()) {
@@ -133,23 +140,21 @@ public class TensorflowDemo extends LinearOpMode {
                     // the last time that call was made.
                     List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
                     if (updatedRecognitions != null) {
-                        telemetry.addData("# Object Detected", updatedRecognitions.size());
+                        tele.addData("# Object Detected", updatedRecognitions.size());
 
                         // step through the list of recognitions and display boundary info.
                         int i = 0;
                         for (Recognition recognition : updatedRecognitions) {
-                            telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
-                            telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
+                            tele.addData(String.format("label (%d)", i), recognition.getLabel());
+                            tele.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
                                     recognition.getLeft(), recognition.getTop());
-                            telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
+                            tele.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
                                     recognition.getRight(), recognition.getBottom());
+                            tele.addData("Confidence",recognition.getConfidence());
                             i++;
-                            if(recognition.getLabel()=="Duck")
-                            {
-
-                            }
-                            telemetry.update();
                         }
+                        tele.update();
+
                     }
                 }
             }

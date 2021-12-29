@@ -30,8 +30,8 @@
 package org.firstinspires.ftc.teamcode;
 
 // Robot Core
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 // Java Utils
@@ -42,6 +42,7 @@ import java.util.List;
 // FTC Dashboard
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 
 // Vuforia
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -61,19 +62,16 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.
 // Tensor Flow
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
+import org.firstinspires.ftc.teamcode.util.DashboardUtil;
 
 
 // Roadrunner
 import com.acmerobotics.roadrunner.geometry.Pose2d;
-import com.acmerobotics.roadrunner.geometry.Vector2d;
-import com.acmerobotics.roadrunner.trajectory.Trajectory;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 
-import org.firstinspires.ftc.teamcode.drive.DriveConstants;
-import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
-
-@Disabled
+@TeleOp(name="Mrv_MyFirstMove", group="Manual mode")
 @Config
-@Autonomous
 public class MrvFirstMove extends LinearOpMode {
 
     enum MrvAllianceFieldPos
@@ -93,16 +91,14 @@ public class MrvFirstMove extends LinearOpMode {
     };
 
 
-    public static double xPos = 30;
-    public static double yPos = 30;
-    public static double turnPos = 0;
-    public static double speed = 15;
-
     private static FtcDashboard         mrvDashboard;
     private static VuforiaLocalizer     mrvVuforia;
     private static VuforiaTrackables    mrvVuTrackables = null;
     private TFObjectDetector            mrvTfod;
-    private static Mrv_Robot            marvyn;
+    Mrv_Robot                           marvyn = new Mrv_Robot();
+    private static MultipleTelemetry    mrvTelemetry;
+    private static TelemetryPacket     mrvDashboardTelemetryPacket = new TelemetryPacket();
+
 
     // VUFORIA Key
     public static final String VUFORIA_LICENSE_KEY = "AZRnab7/////AAABmTUhzFGJLEyEnSXEYWthkjhGRzu8klNOmOa9WEHaryl9AZCo2bZwq/rtvx83YRIgV60/Jy/2aivoXaHNzwi7dEMGoaglSVmdmzPF/zOPyiz27dDJgLVvIROD8ww7lYzL8eweJ+5PqLAavvX3wgrahkOxxOCNeKG9Tl0LkbS5R11ATXL7LLWeUv5FP1aDNgMZvb8P/u96OdOvD6D40Nf01Xf+KnkF5EXwNQKk1r7qd/hiv9h80gvBXMFqMkVgUyogwEnlK2BfmeUhGVm/99BiwwW65LpKSaLVPpW/6xqz9SyPgZ/L/vshbWgSkTB/KoERiV8MsW79RPUuQS6NTOLY32I/kukmsis3MFst5LP/d3gx";
@@ -114,10 +110,31 @@ public class MrvFirstMove extends LinearOpMode {
     private static final float halfField        = 72 * mmPerInch;
     private static final float halfTile         = 12 * mmPerInch;
     private static final float oneAndHalfTile   = 36 * mmPerInch;
-    private OpenGLMatrix mrvLastLocation   = null;
-    public static Pose2d blueShippingHubPos;
-    public static Pose2d redShippingHubPos;
-    public static Pose2d mrvStartingPos2d;
+    private OpenGLMatrix mrvLastLocation   = new OpenGLMatrix();
+
+    private static Pose2d blueShippingHubPos;
+    private static Pose2d redShippingHubPos;
+    private static Pose2d mrvStartingPos2d;
+    private static int iTeleCt = 1;
+
+    // Dashboard configurable variables
+    public static double xPos = 30;
+    public static double yPos = 30;
+    public static double turnPos = 0;
+    public static double speed = 15;
+    public static int TFodResolution = 320;
+    public static double TFodZoomFactor = 2.5;
+    public static int sleepyTime = 5000;
+
+    public static double FirstPosLeftMin = -5;
+    public static double FirstPosLeftMax = 115;
+    public static double FirstPosRightMin = 60;
+    public static double FirstPosRightMax = 230;
+
+    public static double SecPosLeftMin = 315;
+    public static double SecPosLeftMax = 530;
+    public static double SecPosRightMin = 420;
+    public static double SecPosRightMax = 640;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -127,15 +144,29 @@ public class MrvFirstMove extends LinearOpMode {
 
         // init Mecanum Drive
         marvyn.init(hardwareMap);
+        iTeleCt = 1;
 
         // init Dashboard
         mrvDashboard = FtcDashboard.getInstance();
+        mrvTelemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry() );
+        mrvTelemetry.clearAll();
+        mrvTelemetry.update();
+        mrvTelemetry.setAutoClear(false);
+        FtcDashboard.getInstance().getTelemetry().setAutoClear(false);
+
+        mrvTelemetry.addLine(String.format("%d. Marvin Initialized!", iTeleCt++));
+        //        mrvTelemetry.update();
+        double volts = getBatteryVoltage();
+        mrvTelemetry.addData(String.format("%d. Battery voltage", iTeleCt++),  String.format("%.1f volts",volts) );
+//        mrvTelemetry.update();
 
         // init VUFORIA
+        //int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         VuforiaLocalizer.Parameters vuParams = new VuforiaLocalizer.Parameters(R.id.cameraMonitorViewId);
         vuParams.vuforiaLicenseKey = VUFORIA_LICENSE_KEY;
         vuParams.cameraName = marvyn.eyeOfSauron;
         vuParams.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
+        vuParams.cameraMonitorFeedback = VuforiaLocalizer.Parameters.CameraMonitorFeedback.AXES;
         // TODO: Do we need to tweak useExtendedTracking for Vuforia? [Lavanya]
         vuParams.useExtendedTracking = false;
 
@@ -147,8 +178,11 @@ public class MrvFirstMove extends LinearOpMode {
         identifyTarget(1, "Blue Alliance Wall",  halfTile,    halfField,     mmTargetHeight, 90, 0, 0 );
         identifyTarget(2, "Red Storage",        -halfField, -oneAndHalfTile, mmTargetHeight, 90, 0, 90);
         identifyTarget(3, "Red Alliance Wall",   halfTile,    halfField,     mmTargetHeight, 90, 0, 180);
+        mrvTelemetry.addData(String.format("%d. Vuforia Trackers identified", iTeleCt++), mrvVuTrackables.size());
+//        mrvTelemetry.update();
 
         // Calculate camera position
+        // TODO: Identify the correct Camera position and update these variables. [Lavanya]
         final float CAMERA_FORWARD_DISPLACEMENT  = 7.0f * mmPerInch; // eg: Enter the forward distance from the center of the robot to the camera lens
         final float CAMERA_VERTICAL_DISPLACEMENT = 8.0f * mmPerInch; // ex: Camera is 8 inches above the ground
         final float CAMERA_LEFT_DISPLACEMENT     = -6.0f* mmPerInch; // eg: Enter the left distance from the center of the robot to the camera lens
@@ -164,38 +198,78 @@ public class MrvFirstMove extends LinearOpMode {
         for(VuforiaTrackable trackable : allTrackables) {
             ((VuforiaTrackableDefaultListener) trackable.getListener()).setCameraLocationOnRobot(vuParams.cameraName, cameraLocationOnRobot);
         }
+        mrvTelemetry.addLine(String.format("%d. Trackables configured!", iTeleCt++));
+//        mrvTelemetry.update();
+
+        // Startup camera
+        mrvDashboard.startCameraStream(mrvVuforia, 0); // start streaming camera
+        mrvTelemetry.addLine(String.format("%d. Vuforia Camera Stream started", iTeleCt++));
+//        mrvTelemetry.update();
+
+        // Steps for Robot Autonomous execution
+        // 1. Use Vuforia to detect robot's starting position (1 of 4 possible positions)
+        // mrvVuTrackables.activate();
+        MrvAllianceFieldPos startingPos= MrvAllianceFieldPos.BLUE_1;
+        mrvVuTrackables.activate();
+        sleep(sleepyTime);
+        boolean TargetVisible = MrvGetRobotPosition(startingPos, mrvLastLocation);
+        if (TargetVisible) {
+            mrvTelemetry.addData(String.format("%d. StartingPos", iTeleCt++), startingPos);
+            // Get initial pose 2D from starting pos
+            VectorF translation = mrvLastLocation.getTranslation();
+            Orientation rotation = Orientation.getOrientation(mrvLastLocation, EXTRINSIC, XYZ, RADIANS);
+            mrvTelemetry.addData(String.format("%d. mrvLoc Pos (inches)", iTeleCt++), "{X, Y, Z} = %.1f, %.1f, %.1f",
+                    translation.get(0) / mmPerInch, translation.get(1) / mmPerInch, translation.get(2) / mmPerInch);
+            mrvTelemetry.addData(String.format("%d. mrvLoc Rot (deg)", iTeleCt++), "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
+
+            mrvStartingPos2d = new Pose2d(translation.get(0) / mmPerInch, translation.get(1) / mmPerInch, rotation.thirdAngle);
+            DashboardUtil dUtil = new DashboardUtil();
+            dUtil.drawRobot(mrvDashboardTelemetryPacket.fieldOverlay(), mrvStartingPos2d);
+
+            mrvTelemetry.addLine(String.format("%d. Starting pos updated on field overlay", iTeleCt++));
+        }
 
         // init Tensorflow
         int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
                 "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
-        tfodParameters.minResultConfidence = 0.8f;
+        tfodParameters.minResultConfidence = 0.4f;
         tfodParameters.isModelTensorFlow2 = true;
-        tfodParameters.inputSize = 320;
+        tfodParameters.inputSize = TFodResolution;
+//        tfodParameters
         mrvTfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, mrvVuforia);
         mrvTfod.loadModelFromAsset(TFOD_MODEL_ASSET, TFOD_MODEL_LABELS);
-        if(mrvTfod != null) {
-            mrvTfod.activate();
-            mrvTfod.setZoom(2.5, 16.0/9.0);
-        }
 
-        // Startup camera
-        mrvDashboard.startCameraStream(mrvVuforia, 0); // start streaming camera
+        mrvTelemetry.addLine(String.format("%d. Tensorflow assets loaded", iTeleCt++));
+        mrvTelemetry.update();
+        FtcDashboard.getInstance().sendTelemetryPacket(mrvDashboardTelemetryPacket);
 
-        // Steps for Robot Autonomous execution
-        // 1. Use Vuforia to detect robot's starting position (1 of 4 possible positions)
-        MrvAllianceFieldPos startingPos = MrvGetStartingPosition(mrvVuTrackables, mrvLastLocation);
-
-        // Get initial pose 2D from starting pos
+        /* Get initial pose 2D from starting pos
         VectorF translation  = mrvLastLocation.getTranslation();
         Orientation rotation = Orientation.getOrientation(mrvLastLocation, EXTRINSIC,XYZ, RADIANS);
         mrvStartingPos2d = new Pose2d(translation.get(0)/mmPerInch, translation.get(1)/mmPerInch, rotation.thirdAngle);
-
+        */
         // 2. Map Vuforia given field coordinates to Tensorflow screen coordinates <- hmm... maybe not.
         waitForStart();
+        mrvTelemetry.clearAll();
+        mrvDashboard.startCameraStream(mrvTfod, 0); // start streaming camera
+        mrvTelemetry.addLine("Started TFod camera streaming");
 
         // 3. Use Tensorflow to read barcode and identify duck position
-        int iLevel = MrvGetWarehouseLevel(startingPos);
+        int count = 0;
+        while(!isStopRequested()) {
+            if (mrvTfod != null) {
+                mrvTfod.activate();
+                mrvTfod.setZoom(TFodZoomFactor, 16.0 / 9.0);
+            }
+            // TODO: Can we save this 1s wait by activating at Init? [Lavanya]
+            sleep(5000); // Give TFD a second to complete recognition processing
+            mrvDashboardTelemetryPacket.put("Voltage: ", getBatteryVoltage());
+            mrvDashboardTelemetryPacket.put("Recognition #", count++);
+            int iLevel = MrvGetWarehouseLevel(startingPos);
+            mrvDashboard.sendTelemetryPacket(mrvDashboardTelemetryPacket);
+            mrvDashboardTelemetryPacket = new TelemetryPacket();
+        }
 
         // 4. Generate trajectory to drop off freight drop off
         if( startingPos == MrvAllianceFieldPos.BLUE_1 || startingPos == MrvAllianceFieldPos.BLUE_2) {
@@ -228,7 +302,7 @@ public class MrvFirstMove extends LinearOpMode {
 
         if (isStopRequested()) return;
 
-        //Building the trajectory
+        /*Building the trajectory
         Trajectory MrvFirstMove = marvyn.mecanumDrive.trajectoryBuilder(new Pose2d())
                 .splineTo(new Vector2d(xPos,yPos),Math.toRadians(turnPos),
                     SampleMecanumDrive.getVelocityConstraint(speed, DriveConstants.MAX_ANG_VEL,DriveConstants.TRACK_WIDTH),
@@ -241,13 +315,54 @@ public class MrvFirstMove extends LinearOpMode {
         marvyn.mecanumDrive.followTrajectory(marvyn.mecanumDrive.trajectoryBuilder(MrvFirstMove.end(), true)
         .splineTo(new Vector2d(0, 0), Math.toRadians(180))
         .build());
+        */
+    }
 
+    private double getBatteryVoltage() {
+        double result = Double.POSITIVE_INFINITY;
+        for (VoltageSensor sensor : hardwareMap.voltageSensor) {
+            double voltage = sensor.getVoltage();
+            if (voltage > 0) {
+                result = Math.min(result, voltage);
+            }
+        }
+        return result;
     }
 
     //TODO: Autonomous MrvGetStartingPosition [Lavanya]
-    MrvAllianceFieldPos MrvGetStartingPosition(VuforiaTrackables vuTargets, OpenGLMatrix lastLocation)
+    boolean MrvGetRobotPosition(MrvAllianceFieldPos fieldPos, OpenGLMatrix lastLocation)
     {
-        return MrvAllianceFieldPos.RED_1;
+        boolean bTargetVisible = false;
+        List<VuforiaTrackable> allTrackables = new ArrayList<VuforiaTrackable>();
+        allTrackables.addAll(mrvVuTrackables);
+        int iCount = 0;
+        for (VuforiaTrackable trackable : allTrackables) {
+            //mrvTelemetry.addLine(String.format("Checking tracker: %d  ", iCount++) + trackable.getName());
+            if (((VuforiaTrackableDefaultListener) trackable.getListener()).isVisible()) {
+                mrvTelemetry.addData(String.format("%d.  Vuforia Visibile Target", iTeleCt++) , trackable.getName());
+                bTargetVisible = true;
+                OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener) trackable.getListener()).getUpdatedRobotLocation();
+                if (robotLocationTransform != null) {
+                    lastLocation.multiply(robotLocationTransform);
+                    VectorF translation = robotLocationTransform.getTranslation();
+                    Orientation rotation = Orientation.getOrientation(mrvLastLocation, EXTRINSIC, XYZ, RADIANS);
+                    mrvTelemetry.addData(String.format("%d. RobLoc Pos (inches)", iTeleCt++), "{X, Y, Z} = %.1f, %.1f, %.1f",
+                            translation.get(0) / mmPerInch, translation.get(1) / mmPerInch, translation.get(2) / mmPerInch);
+                    mrvTelemetry.addData(String.format("%d. RobLoc Rot (deg)", iTeleCt++), "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
+                }
+                break;
+            }
+            else
+            {
+                mrvTelemetry.addLine(String.format("%d. ",iTeleCt++) + trackable.getName() + String.format(" Not Visible"));
+            }
+
+        }
+        if (!bTargetVisible) {
+            mrvTelemetry.addLine(String.format("%d. Vuforia Visible Target: None!", iTeleCt++));
+        }
+
+        return bTargetVisible;
     }
 
     // TODO: Autonmous MrvGetWarehouseLevel [Lavanya]
@@ -255,26 +370,67 @@ public class MrvFirstMove extends LinearOpMode {
     {
         if(mrvTfod != null && opModeIsActive())
         {
+            boolean bDuckFound = false;
+            int duckPos = 0;
+            float left   = 0.0f;
+            float top    = 0.0f;
+            float bottom = 0.0f;
+            float right  = 0.0f;
+
             List<Recognition> updatedRecognition = mrvTfod.getUpdatedRecognitions();
             if(updatedRecognition != null) {
-                telemetry.addData("# Objects detected", updatedRecognition.size());
+                mrvTelemetry.addData("# Objects detected: ", updatedRecognition.size());
+                mrvDashboardTelemetryPacket.put("# Objects detected: ", updatedRecognition.size());
                 int i = 0;
                 for(Recognition recognition : updatedRecognition)
                 {
-                    if(recognition.getLabel() == "Duck")
-                        telemetry.addData("Objects Detected:","duck detected @");
-                        telemetry.addData("", String.format("  left,top (%d)", i), "%.03f , %.03f",
-                            recognition.getLeft(), recognition.getTop());
-                        telemetry.addData("",String.format("  right,bottom (%d)", i), "%.03f , %.03f",
-                            recognition.getRight(), recognition.getBottom());
+                    left = recognition.getLeft();
+                    right = recognition.getRight();
+                    top = recognition.getTop();
+                    bottom = recognition.getBottom();
+                    //if(recognition.getLabel() == "Duck") {
+                    if (recognition.getLabel()== "Duck") {
+                        if ((FirstPosLeftMin <= left && left <= FirstPosLeftMax) && (FirstPosRightMin <= right && right <= FirstPosRightMax)) {
+                            duckPos = 1;
+                        } else if ((SecPosLeftMin <= left && left <= SecPosLeftMax) && (SecPosRightMin <= right && right <= SecPosRightMax)) {
+                            duckPos = 2;
+
+                        } else {
+                            duckPos = 0;
+                        }
+
+                    } else {
+                        duckPos = 3;
+                    }
+
+                        bDuckFound = true;
+                        mrvTelemetry.addData(String.format("Object (%d:) ", i), recognition.getLabel());
+                        mrvTelemetry.addData("Confidence: ", recognition.getConfidence());
+                        mrvTelemetry.addData("(left, top), (right,bottom): ", String.format(" (%.03f, %.03f)  (%.03f, %.03f) ",  left, top, right, bottom) );
+                        mrvTelemetry.addData("Warehouse Level", duckPos);
+                        mrvTelemetry.update();
+
+                        mrvDashboardTelemetryPacket.put(String.format("Object (%d:) ", i), recognition.getLabel());
+                        mrvDashboardTelemetryPacket.put(String.format("Confidence (%d) ", i), recognition.getConfidence());
+                        mrvDashboardTelemetryPacket.put(String.format("BBox (%d),", i), String.format(" (%.03f, %.03f)  (%.03f, %.03f) ", left, top, right, bottom) );
+                        mrvDashboardTelemetryPacket.put(String.format("Image Size (%d),", i), String.format(" Width: %d; Height: %d ", recognition.getImageWidth(), recognition.getImageHeight()) );
+
+
+
+
                         i++;
+                        //break;
+                    //}
                 }
             }
             else
             {
-                telemetry.addData("Objects Detected","No Objects detected!");
+                mrvTelemetry.addData("Objects Detected","No Objects detected!");
+                mrvTelemetry.update();
             }
         }
+        mrvTelemetry.update();
+
 
         // Based on ducks detected - how do we map to the level for each of these positions?
         // Hint: Could we figure out the image rectangles for each of these positions and then go from there?

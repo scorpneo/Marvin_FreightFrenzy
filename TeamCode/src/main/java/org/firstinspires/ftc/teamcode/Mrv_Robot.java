@@ -124,7 +124,7 @@ public class Mrv_Robot
         Da_Winch.setDirection(DcMotor.Direction.FORWARD);
 
         mecanumDrive = new SampleMecanumDrive(hwMap);
-        //eyeOfSauron = hwMap.get(WebcamName.class, "Sauron");
+        eyeOfSauron = hwMap.get(WebcamName.class, "Sauron");
     }
     String formatAngle( AngleUnit angleUnit, double angle) {
         return formatDegrees(angleUnit.DEGREES.fromUnit(angleUnit, angle));
