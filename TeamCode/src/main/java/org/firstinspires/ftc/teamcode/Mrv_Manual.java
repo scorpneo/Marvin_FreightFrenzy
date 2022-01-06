@@ -327,15 +327,15 @@ public class Mrv_Manual extends LinearOpMode {
                  marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
 
                  // TODO: Set Dawinch to Grab Position
-                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, STOP_AND_RESET_ENCODER);
-                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, RUN_WITHOUT_ENCODER);
-                 marvyn.setTargetPosition(Mrv_Robot.MrvMotors.DA_WINCHI, Dawinchi_Grab_Position_Ticks);
-                 marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 1);
-                 while(opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI) < Dawinchi_Grab_Position_Ticks )
-                 {
-                     idle();
-                 }
-                 marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
+//                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, STOP_AND_RESET_ENCODER);
+//                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, RUN_WITHOUT_ENCODER);
+//                 marvyn.setTargetPosition(Mrv_Robot.MrvMotors.DA_WINCHI, Dawinchi_Grab_Position_Ticks);
+//                 marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 1);
+//                 while(opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI) < Dawinchi_Grab_Position_Ticks )
+//                 {
+//                     idle();
+//                 }
+//                 marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
 
                  // Set Wrist Position parallel to ground
                  marvyn.Wristy.setPosition(Wrist_Parallel_to_Linac);
