@@ -32,6 +32,8 @@ package org.firstinspires.ftc.teamcode;
 // Robot Core
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.geometry.Vector2d;
+import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 // Java Utils
@@ -62,6 +64,9 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.
 // Tensor Flow
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
+import org.firstinspires.ftc.teamcode.drive.DriveConstants;
+import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequenceBuilder;
 import org.firstinspires.ftc.teamcode.util.DashboardUtil;
 
 
@@ -250,31 +255,50 @@ public class MrvFirstMove extends LinearOpMode {
         mrvStartingPos2d = new Pose2d(translation.get(0)/mmPerInch, translation.get(1)/mmPerInch, rotation.thirdAngle);
         */
         // 2. Map Vuforia given field coordinates to Tensorflow screen coordinates <- hmm... maybe not.
+        if (mrvTfod != null) {
+            mrvTfod.activate();
+            mrvTfod.setZoom(TFodZoomFactor, 16.0 / 9.0);
+        }
+        sleep(2000);
+        mrvTelemetry.addLine("Tfod activated! Ready for Init!");
+        mrvTelemetry.update();
+
         waitForStart();
-        mrvTelemetry.clearAll();
         mrvDashboard.startCameraStream(mrvTfod, 0); // start streaming camera
         mrvTelemetry.addLine("Started TFod camera streaming");
 
         // 3. Use Tensorflow to read barcode and identify duck position
-        int count = 0;
-        while(!isStopRequested()) {
-            if (mrvTfod != null) {
-                mrvTfod.activate();
-                mrvTfod.setZoom(TFodZoomFactor, 16.0 / 9.0);
-            }
-            // TODO: Can we save this 1s wait by activating at Init? [Lavanya]
-            sleep(5000); // Give TFD a second to complete recognition processing
-            mrvDashboardTelemetryPacket.put("Voltage: ", getBatteryVoltage());
-            mrvDashboardTelemetryPacket.put("Recognition #", count++);
-            int iLevel = MrvGetWarehouseLevel(startingPos);
-            mrvDashboard.sendTelemetryPacket(mrvDashboardTelemetryPacket);
-            mrvDashboardTelemetryPacket = new TelemetryPacket();
-        }
+         // Give TFD a second to complete recognition processing
+        mrvDashboardTelemetryPacket.put("Voltage: ", getBatteryVoltage());
+        mrvDashboardTelemetryPacket.put("Recognition #", 0);
+        int iLevel = MrvGetWarehouseLevel(startingPos);
+        mrvDashboard.sendTelemetryPacket(mrvDashboardTelemetryPacket);
+        mrvDashboardTelemetryPacket = new TelemetryPacket();
 
         // 4. Generate trajectory to drop off freight drop off
         if( startingPos == MrvAllianceFieldPos.BLUE_1 || startingPos == MrvAllianceFieldPos.BLUE_2) {
             // Move to BLue Shipping hub
             // Trajectory moveTo(
+            marvyn.mecanumDrive.trajectorySequenceBuilder(new Pose2d(-32, 60, Math.toRadians(90)))
+                    //drive to hub
+                    .lineToLinearHeading(new Pose2d(-12, -48, Math.toRadians(90)))
+                    //TODO: set exact end pose for duck spline
+                    .splineTo(new Vector2d(-48,-56),Math.toRadians(-135))
+                    //do duck
+                    .waitSeconds(3)
+                    //go to warehouse entrance
+                    //.lineToLinearHeading(new Pose2d(18,-64,Math.toRadians(0)))
+                    //enter warehouse
+                    //.forward(36)
+                    //wait to not cause the weird Roadrunner heading issue
+                    //.waitSeconds(0.5)
+                    //move over
+                    //.lineToLinearHeading(new Pose2d(56,-40,Math.toRadians(-90)))
+                    //.strafeLeft(24)
+
+                    .build()
+                ;
+
         }
         else if (startingPos == MrvAllianceFieldPos.RED_1 || startingPos == MrvAllianceFieldPos.RED_2)
         {
@@ -302,20 +326,37 @@ public class MrvFirstMove extends LinearOpMode {
 
         if (isStopRequested()) return;
 
-        /*Building the trajectory
-        Trajectory MrvFirstMove = marvyn.mecanumDrive.trajectoryBuilder(new Pose2d())
-                .splineTo(new Vector2d(xPos,yPos),Math.toRadians(turnPos),
-                    SampleMecanumDrive.getVelocityConstraint(speed, DriveConstants.MAX_ANG_VEL,DriveConstants.TRACK_WIDTH),
+       // Building the trajectory
+       /*
+        Trajectory Red = marvyn.mecanumDrive.trajectoryBuilder(mrvStartingPos2d)
+                .splineTo(new Vector2d(-12,-48),Math.toRadians(90),
+                    SampleMecanumDrive.getVelocityConstraint(speed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                     SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
                 .build();
-        marvyn.mecanumDrive.followTrajectory(MrvFirstMove);
+        marvyn.mecanumDrive.followTrajectory(Red);
 
         sleep(2000);
 
-        marvyn.mecanumDrive.followTrajectory(marvyn.mecanumDrive.trajectoryBuilder(MrvFirstMove.end(), true)
+        marvyn.mecanumDrive.followTrajectory(marvyn.mecanumDrive.trajectoryBuilder(Red.end(), true)
         .splineTo(new Vector2d(0, 0), Math.toRadians(180))
+
         .build());
-        */
+
+        // Building the trajectory
+        Trajectory Blue = marvyn.mecanumDrive.trajectoryBuilder(mrvStartingPos2d)
+                .splineTo(new Vector2d(-12,48),Math.toRadians(-90),
+                        SampleMecanumDrive.getVelocityConstraint(speed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                .build();
+        marvyn.mecanumDrive.followTrajectory(Red);
+
+        sleep(2000);
+
+        marvyn.mecanumDrive.followTrajectory(marvyn.mecanumDrive.trajectoryBuilder(Red.end(), true)
+                .splineTo(new Vector2d(0, 0), Math.toRadians(180))
+                .build());
+*/
+
     }
 
     private double getBatteryVoltage() {
@@ -452,6 +493,7 @@ public class MrvFirstMove extends LinearOpMode {
     // TODO: Autonomous Freight Drop off [Avi/Diya]
     void FreightDropOff(int level)
     {
+
 
     }
 

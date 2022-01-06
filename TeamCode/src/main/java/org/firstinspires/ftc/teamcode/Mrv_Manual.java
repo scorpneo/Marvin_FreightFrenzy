@@ -33,13 +33,15 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.ServoController;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.ClassFactory;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
+import java.util.concurrent.TimeUnit;
 
+import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_USING_ENCODER;
+import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_WITHOUT_ENCODER;
+import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.STOP_AND_RESET_ENCODER;
+import static com.qualcomm.robotcore.util.ElapsedTime.Resolution.MILLISECONDS;
 
 
 @Config
@@ -53,29 +55,56 @@ public class Mrv_Manual extends LinearOpMode {
     static final double[] RANGE_FULL= {0.0, 1.0};
 
     // TODO: Remove these unused variables [Lavanya]
-    static final int    CYCLE_MS    =   50;     // period of each cycle
-    private boolean rampUp = true;
-    Servo   activeServo = null;
-    ServoController activeServoController = null;
-    private ElapsedTime runtime = new ElapsedTime();
-    boolean WristStraight=true;
-    double WristPosition = 0.5;
-    double[] range = RANGE_FULL;
-    double increment = INCREMENT;
+ //   static final int    CYCLE_MS    =   50;     // period of each cycle
+  //  private boolean rampUp = true;
+   // Servo   activeServo = null;
+    //ServoController activeServoController = null;
+    //private ElapsedTime runtime = new ElapsedTime();
+    //boolean WristStraight=true;
+    //double WristPosition = 0.5;
+    //double[] range = RANGE_FULL;
+    //double increment = INCREMENT;
 
     // TODO: This used to be 5 before, why not 10? [Lavanya]
-    private double speedAdjust = 10;
-    private double actuatorAdjust = 5;
-    private double winchAdjust = 5;
+    public static double speedAdjust = 10;
+    public static double linacAdjust = 10;
+    public static double dawinchAdjust = 10;
+    private boolean assumingGrabPosition = false;
 
     // TODO: Fine tune the actual duck power to be able to deliver 9 ducks [Atiksh]
     public static double duck_power = 0.25;
 
     boolean ServoTurn = true;
     double  position = 0.5; // Start at halfway position
-    public static double Wrist_Grab_Pos = 0.9;
-    public static double Wrist_Down_Pos = 0.35;
-    public static double Wrist_Start_Pos = 0.3;
+    public static double Wrist_Parallel_to_Linac = 0.425; // Parallel to arm
+    public static double Wrist_chute_dropoff = 0.85; // Perpendicular to Arm at top
+    public static double Wrist_Start_Pos = 0.0; // Perpendicular to Arm at bottom
+
+    //0.52 for picking up preset
+    public static double Claw_Open_Pos = 0.4;
+    public static double Claw_Close_Pos = 0.0;
+    public static int Winch_Parallel_to_ground = 100;
+    public static int Linac_Parallel_to_ground = 100;
+    public static int Winch_Chute_Dropoff = 100;
+    public static int Linac_Chute_Dropoff = 100;
+
+    public static int BUTTON_TRIGGER_TIMER_MS = 500;
+    public static int Linac_Grab_Position_Ticks = 288;
+    public static int Dawinchi_Grab_Position_Ticks = 1000;
+
+    private static ElapsedTime timer_gp1_buttonA;
+    private static ElapsedTime timer_gp1_buttonX;
+    private static ElapsedTime timer_gp1_buttonY;
+    private static ElapsedTime timer_gp1_buttonB;
+    private static ElapsedTime timer_gp1_dpad_up;
+    private static ElapsedTime timer_gp1_dpad_down;
+    private static ElapsedTime timer_gp2_buttonA = new ElapsedTime(MILLISECONDS);
+    private static ElapsedTime timer_gp2_buttonX;
+    private static ElapsedTime timer_gp2_buttonY;
+    private static ElapsedTime timer_gp2_buttonB;
+    private static ElapsedTime timer_gp2_dpad_up;
+    private static ElapsedTime timer_gp2_dpad_down;
+
 
     int DuckPowerDir = 1;
     public static final String VUFORIA_LICENSE_KEY = "AZRnab7/////AAABmTUhzFGJLEyEnSXEYWthkjhGRzu8klNOmOa9WEHaryl9AZCo2bZwq/rtvx83YRIgV60/Jy/2aivoXaHNzwi7dEMGoaglSVmdmzPF/zOPyiz27dDJgLVvIROD8ww7lYzL8eweJ+5PqLAavvX3wgrahkOxxOCNeKG9Tl0LkbS5R11ATXL7LLWeUv5FP1aDNgMZvb8P/u96OdOvD6D40Nf01Xf+KnkF5EXwNQKk1r7qd/hiv9h80gvBXMFqMkVgUyogwEnlK2BfmeUhGVm/99BiwwW65LpKSaLVPpW/6xqz9SyPgZ/L/vshbWgSkTB/KoERiV8MsW79RPUuQS6NTOLY32I/kukmsis3MFst5LP/d3gx";
@@ -89,43 +118,36 @@ public class Mrv_Manual extends LinearOpMode {
         // Initialize the drive system vriables
         // TODO: Lavanya - move all this code (before waitforstart()) to initMarvyn [Lavanya]
         marvyn.init(hardwareMap);
-        telemetry.addData("Status", "Init Hardware");
-        telemetry.update();
-
-        msStuckDetectStop = 2500;
-
-        VuforiaLocalizer.Parameters vuforiaParams = new VuforiaLocalizer.Parameters(R.id.cameraMonitorViewId);
-        vuforiaParams.vuforiaLicenseKey = VUFORIA_LICENSE_KEY;
-        vuforiaParams.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
-        VuforiaLocalizer vuforia = ClassFactory.getInstance().createVuforia(vuforiaParams);
-
-        mrvDashboard = FtcDashboard.getInstance();
-        mrvDashboard.startCameraStream(vuforia, 0);
-
-        marvyn.The_Claw.setPosition(0);
-        marvyn.Wristy.setPosition(Wrist_Start_Pos);
 
         waitForStart();
-
-        // TODO: Why do we InitMarvyn after start? [Lavanya]
         initMarvyn();
 
-        telemetry.setAutoClear(false);
+        // TODO: Why do we InitMarvyn after start? [Lavanya]
         while (opModeIsActive()) {
             mrvManualDrive();
             mrvDuckWheel();
             mrvClaw();
             mrvLinAc();
-            mrvDaWinch();
+            mrvDaWinchi();
             mrvWrist();
+            mrvSwitchtoGrabPosition();
+            //mrvAppendagePresets();
         }
     }
 
-
     // TODO: What all do we need to initialize? Does the other TODO above apply to this? [Lavanya]
-    public void initMarvyn() {
+    public void initMarvyn()
+    {
+        msStuckDetectStop = 2500;
+        mrvDashboard = FtcDashboard.getInstance();
 
-        telemetry.addData("Status:", "Marvyn initialized ;D");
+        marvyn.The_Claw.setPosition(0);
+        marvyn.Wristy.setPosition(Wrist_Start_Pos);
+
+        // TODO: Check if this is too soon for drivers
+        mrvSwitchtoGrabPosition();
+
+        telemetry.addData("Status:", "Marvyn ready to grab freight!");
         telemetry.update();
 
         return;
@@ -133,7 +155,6 @@ public class Mrv_Manual extends LinearOpMode {
 
     public void mrvManualDrive()
     {
-
         // TODO: Fix problem with Dpad left turning speed completely off [Satvika]
         //       Looks like when user presses
         //       D-Pad left, robot stops moving anymore. Pressing DPad right seems to make it move just fine again.
@@ -155,13 +176,6 @@ public class Mrv_Manual extends LinearOpMode {
             telemetry.update();
         }
 
-        //Lavanya 3 (the wonder algorithm!!!)
-       /* robot.lower_left.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x) * (-speedAdjust / 10)); // 1.0
-        robot.lower_right.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x) * (-speedAdjust / 10)); // 1.0
-        robot.upper_left.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x) * (-speedAdjust / 10)); // 0
-        robot.upper_right.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x) * (-speedAdjust / 10)); // 0
-        */
-
        float turnDir = gamepad2.left_stick_x + gamepad1.right_stick_x;
        float moveDir = gamepad1.left_stick_y;
        float strafeDir = gamepad1.left_stick_x;
@@ -180,13 +194,13 @@ public class Mrv_Manual extends LinearOpMode {
     }
 
     public void mrvDuckWheel() {
-        //Shooter and pusher code
 
         if (gamepad2.left_bumper) {
             DuckOn = gamepad2.left_bumper;
             telemetry.addData("Duck Wheel toggle to:", DuckOn);
             if (DuckOn) {
                 telemetry.addData("Duck Wheel:", "Spinning Clockwise" );
+                telemetry.update();
                 DuckPowerDir = 1;
             }
             sleep(500);
@@ -196,6 +210,7 @@ public class Mrv_Manual extends LinearOpMode {
             telemetry.addData("Duck Wheel toggle to:", DuckOn);
             if (DuckOn) {
                 telemetry.addData("Duck Wheel:", "Spinning Counterclockwise" );
+                telemetry.update();
                 DuckPowerDir = -1;
             }
             sleep(500);
@@ -210,38 +225,131 @@ public class Mrv_Manual extends LinearOpMode {
         else {
             marvyn.duck_wheel.setPower(0);
         }
-
-        telemetry.update();
         return;
     }
 
-    public void mrvClaw() {
-        // Connect to servo (Assume PushBot Left Hand)
-        // Change the text in quotes to match any servo name on your robot.
-
+    public void mrvClaw()
+    {
         ServoTurn = gamepad2.right_trigger == 1f;
         // slew the servo, according to the rampUp (direction) variable.
         if (ServoTurn) {
-            // Keep stepping up until we hit the max value.
-            //position += increment ;
-            //if (position >= 1 ) {
-            position = 1;
-            //}
+            position = Claw_Open_Pos;
         } else {
-            // Keep stepping down until we hit the min value.
-            //position -= increment ;
-            //if (position <= 0 ) {
-            position = 0;
-            //}
+            position = Claw_Close_Pos;
         }
 
         // Set the servo to the new position and pause;
         marvyn.The_Claw.setPosition(position);
-
-        //telemetry.addData("RampUp", ServoTurn);
     }
 
     public void mrvWrist()
+    {
+        if(gamepad2.left_trigger == 1f) {
+            marvyn.Wristy.setPosition(Wrist_chute_dropoff);
+        }
+        else
+        {
+            marvyn.Wristy.setPosition(Wrist_Parallel_to_Linac);
+        }
+
+        return;
+    }
+
+    // TODO: Add a limit switch to Linear actuator - touch sensor? [Atiksh/Anshul]
+    public void mrvLinAc()
+    {
+
+        if (gamepad2.dpad_left ) {
+            linacAdjust -= 1;
+            if (linacAdjust <= 1){
+                linacAdjust =1;
+            }
+            telemetry.addData("linac power: ", "%f", linacAdjust);
+            telemetry.update();
+        }
+
+        if (gamepad2.dpad_right) {
+            linacAdjust += 1;
+            if (linacAdjust >= 10){
+                linacAdjust = 10;
+            }
+            telemetry.addData("linac power: ", "%f", linacAdjust);
+            telemetry.update();
+        }
+        marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, gamepad2.left_stick_y * (linacAdjust /10));
+    }
+
+    // TODO: Add a limit switch to Da Winch - Touch sensor? [Satvika/Vishruth]
+    public void mrvDaWinchi()
+    {
+         if (gamepad2.dpad_up ) {
+            dawinchAdjust -= 1;
+            if (dawinchAdjust <= 1){
+                dawinchAdjust = 1;
+            }
+            telemetry.addData("dawinch power: ", "%f", dawinchAdjust);
+            telemetry.update();
+        }
+
+        if (gamepad2.dpad_down && dawinchAdjust <= 10) {
+            dawinchAdjust += 1;
+            if (dawinchAdjust >= 1){
+                dawinchAdjust = 10;
+            }
+            telemetry.addData("Current speed: ", "%f", dawinchAdjust);
+            telemetry.update();
+        }
+
+        marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, gamepad2.right_stick_y * (dawinchAdjust /10));
+    }
+
+     public void mrvSwitchtoGrabPosition()
+     {
+         if(gamepad2.a)
+         {
+             if(!assumingGrabPosition) {
+                 timer_gp2_buttonA.reset();
+                 assumingGrabPosition = true;
+             }
+             else if( timer_gp2_buttonA.time(TimeUnit.MILLISECONDS) > BUTTON_TRIGGER_TIMER_MS) {
+                 telemetry.addLine("GP2_A triggered. Will set Linac");
+                 telemetry.update();
+
+                 // Set Linac to Grab Position
+                 marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, STOP_AND_RESET_ENCODER);
+                 marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, RUN_WITHOUT_ENCODER);
+                 marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, Linac_Grab_Position_Ticks);
+                 marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 1);
+                 while(opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.LIN_AC) < Linac_Grab_Position_Ticks )
+                 {
+                     idle();
+                 }
+                 marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
+
+                 // TODO: Set Dawinch to Grab Position
+                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, STOP_AND_RESET_ENCODER);
+                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, RUN_WITHOUT_ENCODER);
+                 marvyn.setTargetPosition(Mrv_Robot.MrvMotors.DA_WINCHI, Dawinchi_Grab_Position_Ticks);
+                 marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 1);
+                 while(opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI) < Dawinchi_Grab_Position_Ticks )
+                 {
+                     idle();
+                 }
+                 marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
+
+                 // Set Wrist Position parallel to ground
+                 marvyn.Wristy.setPosition(Wrist_Parallel_to_Linac);
+                 marvyn.The_Claw.setPosition(0);
+                 assumingGrabPosition = false;
+             }
+         }
+         else
+         {
+             assumingGrabPosition = false;
+         }
+     }
+
+    public void mrvAppendagePresets()
     {
         // TODO: Use state tracking to implement button control. One method tracks the state, one method ensures action [Lavanya]
         //       Trigger is not the right control to move the Wrist
@@ -249,64 +357,53 @@ public class Mrv_Manual extends LinearOpMode {
         //       As long as the trigger is pressed, the robot keeps doing something and the degree to which it is
         //       pressed controls the intensity. Trigger is a bit similar to joystick, but only provides a value
         //       between 0 - 1 rather than -1 - 1 like a joystick.
+        if(gamepad2.a = true) {
+            marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, RUN_USING_ENCODER);
+            marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        if(gamepad2.left_trigger == 1f) {
+            marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, RUN_USING_ENCODER);
+            marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             //WristStraight = !WristStraight;
-            marvyn.Wristy.setPosition(Wrist_Down_Pos);
+            marvyn.Wristy.setPosition(Wrist_Parallel_to_Linac);
+
+            marvyn.setTargetPosition(Mrv_Robot.MrvMotors.DA_WINCHI, Winch_Parallel_to_ground);
+            marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, Linac_Parallel_to_ground);
+
+            marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 1);
+            marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 1);
+
+            marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, DcMotor.RunMode.RUN_TO_POSITION);
+            marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, DcMotor.RunMode.RUN_TO_POSITION);
+
+            marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, RUN_WITHOUT_ENCODER);
+            marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, RUN_WITHOUT_ENCODER);
+
         }
-        else
+        else if (gamepad2.y = true)
         {
-            marvyn.Wristy.setPosition(Wrist_Grab_Pos);
+            marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, RUN_USING_ENCODER);
+            marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+            marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, RUN_USING_ENCODER);
+            marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+            marvyn.Wristy.setPosition(Wrist_chute_dropoff);
+
+            marvyn.setTargetPosition(Mrv_Robot.MrvMotors.DA_WINCHI, Winch_Chute_Dropoff);
+            marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, Linac_Chute_Dropoff);
+
+
+            marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 1);
+            marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 1);
+
+            marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, DcMotor.RunMode.RUN_TO_POSITION);
+            marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, DcMotor.RunMode.RUN_TO_POSITION);
+
+            marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, RUN_WITHOUT_ENCODER);
+            marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, RUN_WITHOUT_ENCODER);
         }
 
-        return;
 
     }
-
-    // TODO: Add a limit switch to Linear actuator - touch sensor? [Atiksh/Anshul]
-        public void mrvLinAc()
-        {
-            if (gamepad2.dpad_left ) {
-                actuatorAdjust -= 1;
-                if (actuatorAdjust < 1){
-                    actuatorAdjust =1;
-                }
-                telemetry.addData("Current speed: ", "%f", actuatorAdjust);
-                telemetry.update();
-            }
-
-            if (gamepad2.dpad_right) {
-                actuatorAdjust += 1;
-                if (actuatorAdjust > 10){
-                    actuatorAdjust = 10;
-                }
-                telemetry.addData("Current speed: ", "%f", actuatorAdjust);
-                telemetry.update();
-            }
-            marvyn.Linac_2.setPower(gamepad2.left_stick_y * (actuatorAdjust/10));
-        }
-
-        // TODO: Add a limit switch to Da Winch - Touch sensor? [Satvika/Vishruth]
-        public void mrvDaWinch()
-        {
-            if (gamepad2.dpad_up ) {
-                winchAdjust -= 1;
-                if (winchAdjust < 1){
-                    winchAdjust = 1;
-                }
-                telemetry.addData("Current speed: ", "%f", winchAdjust);
-                telemetry.update();
-            }
-
-            if (gamepad2.dpad_down && winchAdjust <= 10) {
-                winchAdjust += 1;
-                if (winchAdjust > 1){
-                    winchAdjust = 10;
-                }
-                telemetry.addData("Current speed: ", "%f", winchAdjust);
-                telemetry.update();
-            }
-            marvyn.Da_Winch.setPower(gamepad2.right_stick_y * (winchAdjust/10));
-        }
     }
 

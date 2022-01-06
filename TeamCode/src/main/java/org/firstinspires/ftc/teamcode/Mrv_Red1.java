@@ -178,15 +178,15 @@ public class Mrv_Red1 extends LinearOpMode {
     public void dropBlockOnTop() {
         if (opModeIsActive()) {
 
-            robot.setRunMode(Mrv_Robot.MrvMotors.WINCH, DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            robot.setRunMode(Mrv_Robot.MrvMotors.LINEAR_ACTUATOR, DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            robot.setRunMode(Mrv_Robot.MrvMotors.WINCH, DcMotor.RunMode.RUN_USING_ENCODER);
-            robot.setRunMode(Mrv_Robot.MrvMotors.LINEAR_ACTUATOR, DcMotor.RunMode.RUN_USING_ENCODER);
+            robot.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            robot.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            robot.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, DcMotor.RunMode.RUN_USING_ENCODER);
+            robot.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, DcMotor.RunMode.RUN_USING_ENCODER);
 //
-            robot.setTargetPosition(Mrv_Robot.MrvMotors.LINEAR_ACTUATOR, 513);
-            robot.setPower(Mrv_Robot.MrvMotors.LINEAR_ACTUATOR, 1);
-            robot.setRunMode(Mrv_Robot.MrvMotors.LINEAR_ACTUATOR, DcMotor.RunMode.RUN_TO_POSITION);
-            while (opModeIsActive() && robot.areMotorsBusy(Mrv_Robot.MrvMotors.LINEAR_ACTUATOR)) {
+            robot.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, 513);
+            robot.setPower(Mrv_Robot.MrvMotors.LIN_AC, 1);
+            robot.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, DcMotor.RunMode.RUN_TO_POSITION);
+            while (opModeIsActive() && robot.areMotorsBusy(Mrv_Robot.MrvMotors.LIN_AC)) {
                 telemetry.addData("Status: ", "Arm moving forward");
                 telemetry.update();
             }

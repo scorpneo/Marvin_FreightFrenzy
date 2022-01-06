@@ -51,8 +51,8 @@ public class Mrv_Robot
         UPPER_RIGHT,
         LOWER_RIGHT,
         DUCK_WHEEL,
-        LINEAR_ACTUATOR,
-        WINCH,
+        LIN_AC,
+        DA_WINCHI,
         ALL_DRIVES,
         ALL_ATTACHMENTS,
         ALL
@@ -63,7 +63,7 @@ public class Mrv_Robot
     public DcMotor lower_left = null;
     public DcMotor lower_right = null;
     public DcMotor duck_wheel = null;
-    public DcMotor Linac_2 = null;
+    public DcMotor Linac = null;
     public DcMotor Da_Winch = null;
     public Servo The_Claw = null;
     public Servo Wristy = null;
@@ -91,7 +91,7 @@ public class Mrv_Robot
         lower_left = hwMap.get(DcMotor.class, "Lower_Left");
         lower_right = hwMap.get(DcMotor.class, "Lower_Right");
         duck_wheel = hwMap.get(DcMotor.class, "Duck_Wheel");
-        Linac_2 = hwMap.get(DcMotor.class, "Linac_2.0");
+        Linac = hwMap.get(DcMotor.class, "Linac_2.0");
         Da_Winch = hwMap.get(DcMotor.class, "Da_Winch");
 
 
@@ -109,7 +109,7 @@ public class Mrv_Robot
         lower_left.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         lower_right.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         duck_wheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        Linac_2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        Linac.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         Da_Winch.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
 
@@ -120,7 +120,7 @@ public class Mrv_Robot
         lower_left.setDirection(DcMotor.Direction.REVERSE); //- used to be
         lower_right.setDirection(DcMotor.Direction.FORWARD); //+ used to be
         duck_wheel.setDirection(DcMotor.Direction.FORWARD);
-        Linac_2.setDirection(DcMotor.Direction.FORWARD);
+        Linac.setDirection(DcMotor.Direction.FORWARD);
         Da_Winch.setDirection(DcMotor.Direction.FORWARD);
 
         mecanumDrive = new SampleMecanumDrive(hwMap);
@@ -153,10 +153,13 @@ public class Mrv_Robot
                 break;
             case DUCK_WHEEL:
                 duck_wheel.setMode(eMode);
-            case LINEAR_ACTUATOR:
-                duck_wheel.setMode(eMode);
-            case WINCH:
-                duck_wheel.setMode(eMode);
+                break;
+            case LIN_AC:
+                Linac.setMode(eMode);
+                break;
+            case DA_WINCHI:
+                Da_Winch.setMode(eMode);
+                break;
             case ALL_DRIVES:
                 lower_right.setMode(eMode);
                 lower_left.setMode(eMode);
@@ -164,9 +167,10 @@ public class Mrv_Robot
                 upper_left.setMode(eMode);
                 break;
             case ALL_ATTACHMENTS:
-                Linac_2.setMode(eMode);
+                Linac.setMode(eMode);
                 duck_wheel.setMode(eMode);
                 Da_Winch.setMode(eMode);
+                break;
             case ALL:
                 lower_right.setMode(eMode);
                 lower_left.setMode(eMode);
@@ -174,9 +178,8 @@ public class Mrv_Robot
                 upper_left.setMode(eMode);
                 duck_wheel.setMode(eMode);
                 Da_Winch.setMode(eMode);
-                Linac_2.setMode(eMode);
-
-
+                Linac.setMode(eMode);
+                break;
         }
     }
 
@@ -198,10 +201,13 @@ public class Mrv_Robot
                 break;
             case DUCK_WHEEL:
                 duck_wheel.setPower(dPower);
-            case LINEAR_ACTUATOR:
-                Linac_2.setPower(dPower);
-            case WINCH:
+                break;
+            case LIN_AC:
+                Linac.setPower(dPower);
+                break;
+            case DA_WINCHI:
                 Da_Winch.setPower(dPower);
+                break;
             case ALL_DRIVES:
                 lower_right.setPower(dPower);
                 lower_left.setPower(dPower);
@@ -215,8 +221,8 @@ public class Mrv_Robot
                 upper_left.setPower(dPower);
                 duck_wheel.setPower(dPower);
                 Da_Winch.setPower(dPower);
-                Linac_2.setPower(dPower);
-
+                Linac.setPower(dPower);
+                break;
         }
     }
 
@@ -232,27 +238,10 @@ public class Mrv_Robot
                 return upper_right.getCurrentPosition();
             case LOWER_RIGHT:
                 return lower_right.getCurrentPosition();
-            case LINEAR_ACTUATOR:
-                Linac_2.getCurrentPosition();
-            case WINCH:
-                Da_Winch.getCurrentPosition();
-            case ALL_DRIVES:
-                lower_right.getCurrentPosition();
-                lower_left.getCurrentPosition();
-                upper_right.getCurrentPosition();
-                upper_left.getCurrentPosition();
-            case ALL_ATTACHMENTS:
-                duck_wheel.getCurrentPosition();
-                Linac_2.getCurrentPosition();
-                Da_Winch.getCurrentPosition();
-            case ALL:
-                lower_right.getCurrentPosition();
-                lower_left.getCurrentPosition();
-                upper_right.getCurrentPosition();
-                upper_left.getCurrentPosition();
-                duck_wheel.getCurrentPosition();
-                Da_Winch.getCurrentPosition();
-                Linac_2.getCurrentPosition();
+            case LIN_AC:
+                return Linac.getCurrentPosition();
+            case DA_WINCHI:
+                return Da_Winch.getCurrentPosition();
             default:
                 return 0;
         }
@@ -274,10 +263,12 @@ public class Mrv_Robot
             case LOWER_RIGHT:
                 lower_right.setTargetPosition(iPos);
                 break;
-            case LINEAR_ACTUATOR:
-                Linac_2.setTargetPosition(iPos);
-            case WINCH:
+            case LIN_AC:
+                Linac.setTargetPosition(iPos);
+                break;
+            case DA_WINCHI:
                 Da_Winch.setTargetPosition(iPos);
+                break;
             case ALL_DRIVES:
                 lower_right.setTargetPosition(iPos);
                 lower_left.setTargetPosition(iPos);
@@ -291,7 +282,7 @@ public class Mrv_Robot
                 upper_left.setTargetPosition(iPos);
                 duck_wheel.setTargetPosition(iPos);
                 Da_Winch.setTargetPosition(iPos);
-                Linac_2.setTargetPosition(iPos);
+                Linac.setTargetPosition(iPos);
             default :
                 break;
         }
@@ -311,16 +302,16 @@ public class Mrv_Robot
                 return lower_right.isBusy();
             case DUCK_WHEEL:
                 return duck_wheel.isBusy();
-            case LINEAR_ACTUATOR:
-                return Linac_2.isBusy();
-            case WINCH:
+            case LIN_AC:
+                return Linac.isBusy();
+            case DA_WINCHI:
                 return Da_Winch.isBusy();
             case ALL_DRIVES: // All Drives
                 return lower_left.isBusy() && lower_right.isBusy() && upper_left.isBusy() && upper_right.isBusy();
             case ALL_ATTACHMENTS:
-                return Linac_2.isBusy() && duck_wheel.isBusy() && Da_Winch.isBusy();
+                return Linac.isBusy() && duck_wheel.isBusy() && Da_Winch.isBusy();
             case ALL:
-                return lower_left.isBusy() && lower_right.isBusy() && upper_left.isBusy() && upper_right.isBusy() && duck_wheel.isBusy() && Linac_2.isBusy()&& Da_Winch.isBusy();
+                return lower_left.isBusy() && lower_right.isBusy() && upper_left.isBusy() && upper_right.isBusy() && duck_wheel.isBusy() && Linac.isBusy()&& Da_Winch.isBusy();
             default:
                 return false;
         }
