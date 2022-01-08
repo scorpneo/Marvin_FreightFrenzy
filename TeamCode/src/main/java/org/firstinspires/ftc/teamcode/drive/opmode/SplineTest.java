@@ -17,11 +17,13 @@ public class SplineTest extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
+        Pose2d StartingPose = new Pose2d(12, -60, Math.toRadians(90));
+        drive.setPoseEstimate(StartingPose);
         waitForStart();
 
         if (isStopRequested()) return;
 
-        Trajectory traj = drive.trajectoryBuilder(new Pose2d())
+        Trajectory traj = drive.trajectoryBuilder(StartingPose)
                 .splineTo(new Vector2d(30, 15), 0)
                 .build();
 

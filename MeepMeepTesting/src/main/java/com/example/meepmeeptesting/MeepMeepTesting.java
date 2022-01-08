@@ -16,22 +16,17 @@ public class MeepMeepTesting {
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 13)
                 .followTrajectorySequence(drive ->
                         //red duck
-                        drive.trajectorySequenceBuilder(new Pose2d(0, 0, Math.toRadians(0)))
-                                .lineToLinearHeading(new Pose2d(-12,-48,Math.toRadians(90)))
-                                //spline to duck wheel
-                                //TODO: set exact end pose for duck spline
-                                .splineTo(new Vector2d(-48,-56),Math.toRadians(-135))
-                                //do duck
-                                .waitSeconds(3)
-                                //go to warehouse entrance
-                                //.lineToLinearHeading(new Pose2d(18,-64,Math.toRadians(0)))
-                                //enter warehouse
-                                //.forward(36)
-                                //wait to not cause the weird Roadrunner heading issue
-                                //.waitSeconds(0.5)
-                                //move over
-                                //.lineToLinearHeading(new Pose2d(56,-40,Math.toRadians(-90)))
-                                //.strafeLeft(24)
+                        drive.trajectorySequenceBuilder(new Pose2d(12, -62, Math.toRadians(90)))
+                                //target pos
+                                .lineToLinearHeading(new Pose2d(0,-48,Math.toRadians(130)))
+                                //spline
+                                .lineToLinearHeading(new Pose2d(-55,-55,Math.toRadians(90)))
+                                //enter
+                                .lineToLinearHeading(new Pose2d(24,-64,Math.toRadians(0)))
+                                //warehouse
+                                .lineToLinearHeading(new Pose2d(40,-64, Math.toRadians(0)))
+                                //park
+                                .lineToLinearHeading( new Pose2d(64,-36, Math.toRadians(90)))
 
                                 .build()
                 );
