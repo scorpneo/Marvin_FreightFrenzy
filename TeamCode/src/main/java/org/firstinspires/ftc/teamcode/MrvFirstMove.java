@@ -100,9 +100,9 @@ public class MrvFirstMove extends LinearOpMode {
     private static VuforiaLocalizer     mrvVuforia;
     private static VuforiaTrackables    mrvVuTrackables = null;
     private TFObjectDetector            mrvTfod;
-    Mrv_Robot                           marvyn = new Mrv_Robot();
     private static MultipleTelemetry    mrvTelemetry;
     private static TelemetryPacket     mrvDashboardTelemetryPacket = new TelemetryPacket();
+    Mrv_Robot                           marvyn = new Mrv_Robot();
 
 
     // VUFORIA Key
@@ -160,10 +160,8 @@ public class MrvFirstMove extends LinearOpMode {
         FtcDashboard.getInstance().getTelemetry().setAutoClear(false);
 
         mrvTelemetry.addLine(String.format("%d. Marvin Initialized!", iTeleCt++));
-        //        mrvTelemetry.update();
         double volts = getBatteryVoltage();
         mrvTelemetry.addData(String.format("%d. Battery voltage", iTeleCt++),  String.format("%.1f volts",volts) );
-//        mrvTelemetry.update();
 
         // init VUFORIA
         //int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
@@ -255,13 +253,8 @@ public class MrvFirstMove extends LinearOpMode {
         mrvStartingPos2d = new Pose2d(translation.get(0)/mmPerInch, translation.get(1)/mmPerInch, rotation.thirdAngle);
         */
         // 2. Map Vuforia given field coordinates to Tensorflow screen coordinates <- hmm... maybe not.
-        if (mrvTfod != null) {
-            mrvTfod.activate();
-            mrvTfod.setZoom(TFodZoomFactor, 16.0 / 9.0);
-        }
-        sleep(2000);
-        mrvTelemetry.addLine("Tfod activated! Ready for Init!");
-        mrvTelemetry.update();
+
+
 
         waitForStart();
         mrvDashboard.startCameraStream(mrvTfod, 0); // start streaming camera
@@ -498,7 +491,6 @@ public class MrvFirstMove extends LinearOpMode {
     }
 
     // TODO: Autonomous Freight Pickup [Lavanya]
-
     void FreightPickUp()
     {
 

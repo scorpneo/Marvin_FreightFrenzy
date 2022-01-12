@@ -46,7 +46,7 @@ import static com.qualcomm.robotcore.util.ElapsedTime.Resolution.MILLISECONDS;
 
 @Config
 @TeleOp(name="Mrv_Manual", group="Manual mode")
-// @Disabled
+//@Disabled
 public class Mrv_Manual extends LinearOpMode {
     // Declare OpMode members.
     Mrv_Robot marvyn = new Mrv_Robot();
@@ -92,8 +92,8 @@ public class Mrv_Manual extends LinearOpMode {
     public static int Linac_Chute_Dropoff = 100;
 
     public static int BUTTON_TRIGGER_TIMER_MS = 500;
-    public static int Linac_Grab_Position_Ticks = 288;
-    public static int Dawinchi_Grab_Position_Ticks = 1000;
+    public static int Linac_Grab_Position_Ticks = 288; // From REV Robotics Core HEX
+    public static int Dawinchi_Grab_Position_Ticks = 1120; // From REV Robotics HD HEX 40:1
 
     private static ElapsedTime timer_gp1_buttonA;
     private static ElapsedTime timer_gp1_buttonX;
@@ -199,7 +199,7 @@ public class Mrv_Manual extends LinearOpMode {
             }
         }
 
-            float turnDir = gamepad2.left_stick_x + gamepad1.right_stick_x;
+            float turnDir = gamepad2.left_stick_x/3 + gamepad1.right_stick_x;
             float moveDir = gamepad1.left_stick_y;
             float strafeDir = gamepad1.left_stick_x;
 
@@ -222,7 +222,7 @@ public class Mrv_Manual extends LinearOpMode {
                 DuckOn = gamepad2.left_bumper;
                 telemetry.addData("Duck Wheel toggle to:", DuckOn);
                 if (DuckOn) {
-                    telemetry.addData("Duck Wheel:", "Spinning Clockwise");
+                    telemetry.addData("Duck Wheelsss:", "Spinning Clockwise");
                     telemetry.update();
                     DuckPowerDir = 1;
                 }
@@ -231,7 +231,7 @@ public class Mrv_Manual extends LinearOpMode {
                 DuckOn = gamepad2.right_bumper;
                 telemetry.addData("Duck Wheel toggle to:", DuckOn);
                 if (DuckOn) {
-                    telemetry.addData("Duck Wheel:", "Spinning Counterclockwise");
+                    telemetry.addData("Duck Wheelsss:", "Spinning Counterclockwise");
                     telemetry.update();
                     DuckPowerDir = -1;
                 }
@@ -241,9 +241,9 @@ public class Mrv_Manual extends LinearOpMode {
             }
 
             if (DuckOn) {
-                marvyn.duck_wheel.setPower(duck_power * DuckPowerDir);
+                marvyn.setPower(Mrv_Robot.MrvMotors.DUCK_WHEELS,duck_power * DuckPowerDir);
             } else {
-                marvyn.duck_wheel.setPower(0);
+                marvyn.setPower(Mrv_Robot.MrvMotors.DUCK_WHEELS,0);
             }
             return;
         }
@@ -400,60 +400,6 @@ public class Mrv_Manual extends LinearOpMode {
             }
         }
 
-        public void mrvAppendagePresets ()
-        {
-            // TODO: Use state tracking to implement button control. One method tracks the state, one method ensures action [Lavanya]
-            //       Trigger is not the right control to move the Wrist
-            //       Trigger should be used like the joy sticks to keep something happening. Think hand drill
-            //       As long as the trigger is pressed, the robot keeps doing something and the degree to which it is
-            //       pressed controls the intensity. Trigger is a bit similar to joystick, but only provides a value
-            //       between 0 - 1 rather than -1 - 1 like a joystick.
-            if (gamepad2.a = true) {
-                marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, RUN_USING_ENCODER);
-                marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-                marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, RUN_USING_ENCODER);
-                marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                //WristStraight = !WristStraight;
-                marvyn.Wristy.setPosition(Wrist_Parallel_to_Linac);
-
-                marvyn.setTargetPosition(Mrv_Robot.MrvMotors.DA_WINCHI, Winch_Parallel_to_ground);
-                marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, Linac_Parallel_to_ground);
-
-                marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 1);
-                marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 1);
-
-                marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, DcMotor.RunMode.RUN_TO_POSITION);
-                marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, DcMotor.RunMode.RUN_TO_POSITION);
-
-                marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, RUN_WITHOUT_ENCODER);
-                marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, RUN_WITHOUT_ENCODER);
-
-            } else if (gamepad2.y = true) {
-                marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, RUN_USING_ENCODER);
-                marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-                marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, RUN_USING_ENCODER);
-                marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-                marvyn.Wristy.setPosition(Wrist_chute_dropoff);
-
-                marvyn.setTargetPosition(Mrv_Robot.MrvMotors.DA_WINCHI, Winch_Chute_Dropoff);
-                marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, Linac_Chute_Dropoff);
-
-
-                marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 1);
-                marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 1);
-
-                marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, DcMotor.RunMode.RUN_TO_POSITION);
-                marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, DcMotor.RunMode.RUN_TO_POSITION);
-
-                marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, RUN_WITHOUT_ENCODER);
-                marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, RUN_WITHOUT_ENCODER);
-            }
-
-
-        }
     }
 
 

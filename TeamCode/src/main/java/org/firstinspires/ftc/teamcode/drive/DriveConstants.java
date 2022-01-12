@@ -63,10 +63,10 @@ public class DriveConstants {
      * small and gradually increase them later after everything is working. All distance units are
      * inches.
      */
-    public static double MAX_VEL = 25;
-    public static double MAX_ACCEL = 25;
-    public static double MAX_ANG_VEL = 12;
-    public static double MAX_ANG_ACCEL = 1;
+    public static double MAX_VEL = 54;  // Theoretical Max = 62 in/s for Marvyn. = maxrpm * wheel rad * 2PI * gear ratio / 60
+    public static double MAX_ACCEL = 54;
+    public static double MAX_ANG_VEL = 12; // # degress robot turns per sec. Usually 180 per sec
+    public static double MAX_ANG_ACCEL = 1; // 180 per sec 2.
 
 
     public static double encoderTicksToInches(double ticks) {

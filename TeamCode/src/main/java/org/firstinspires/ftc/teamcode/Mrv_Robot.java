@@ -50,7 +50,7 @@ public class Mrv_Robot
         LOWER_LEFT,
         UPPER_RIGHT,
         LOWER_RIGHT,
-        DUCK_WHEEL,
+        DUCK_WHEELS,
         LIN_AC,
         DA_WINCHI,
         ALL_DRIVES,
@@ -63,6 +63,7 @@ public class Mrv_Robot
     public DcMotor lower_left = null;
     public DcMotor lower_right = null;
     public DcMotor duck_wheel = null;
+    public DcMotor another_duck_wheel = null;
     public DcMotor Linac = null;
     public DcMotor Da_Winch = null;
     public Servo The_Claw = null;
@@ -91,6 +92,7 @@ public class Mrv_Robot
         lower_left = hwMap.get(DcMotor.class, "Lower_Left");
         lower_right = hwMap.get(DcMotor.class, "Lower_Right");
         duck_wheel = hwMap.get(DcMotor.class, "Duck_Wheel");
+        another_duck_wheel = hwMap.get(DcMotor.class, "Duck_Wheel_2");
         Linac = hwMap.get(DcMotor.class, "Linac_2.0");
         Da_Winch = hwMap.get(DcMotor.class, "Da_Winch");
 
@@ -109,6 +111,7 @@ public class Mrv_Robot
         lower_left.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         lower_right.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         duck_wheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        another_duck_wheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         Linac.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         Da_Winch.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
@@ -120,6 +123,7 @@ public class Mrv_Robot
         lower_left.setDirection(DcMotor.Direction.REVERSE); //- used to be
         lower_right.setDirection(DcMotor.Direction.FORWARD); //+ used to be
         duck_wheel.setDirection(DcMotor.Direction.FORWARD);
+        another_duck_wheel.setDirection(DcMotor.Direction.FORWARD);
         Linac.setDirection(DcMotor.Direction.FORWARD);
         Da_Winch.setDirection(DcMotor.Direction.FORWARD);
 
@@ -151,8 +155,9 @@ public class Mrv_Robot
             case LOWER_RIGHT:
                 lower_right.setMode(eMode);
                 break;
-            case DUCK_WHEEL:
+            case DUCK_WHEELS:
                 duck_wheel.setMode(eMode);
+                another_duck_wheel.setMode(eMode);
                 break;
             case LIN_AC:
                 Linac.setMode(eMode);
@@ -169,6 +174,7 @@ public class Mrv_Robot
             case ALL_ATTACHMENTS:
                 Linac.setMode(eMode);
                 duck_wheel.setMode(eMode);
+                another_duck_wheel.setMode(eMode);
                 Da_Winch.setMode(eMode);
                 break;
             case ALL:
@@ -177,6 +183,7 @@ public class Mrv_Robot
                 upper_right.setMode(eMode);
                 upper_left.setMode(eMode);
                 duck_wheel.setMode(eMode);
+                another_duck_wheel.setMode(eMode);
                 Da_Winch.setMode(eMode);
                 Linac.setMode(eMode);
                 break;
@@ -199,8 +206,9 @@ public class Mrv_Robot
             case LOWER_RIGHT:
                 lower_right.setPower(dPower);
                 break;
-            case DUCK_WHEEL:
+            case DUCK_WHEELS:
                 duck_wheel.setPower(dPower);
+                another_duck_wheel.setPower(dPower);
                 break;
             case LIN_AC:
                 Linac.setPower(dPower);
@@ -220,6 +228,7 @@ public class Mrv_Robot
                 upper_right.setPower(dPower);
                 upper_left.setPower(dPower);
                 duck_wheel.setPower(dPower);
+                another_duck_wheel.setPower(dPower);
                 Da_Winch.setPower(dPower);
                 Linac.setPower(dPower);
                 break;
@@ -281,6 +290,7 @@ public class Mrv_Robot
                 upper_right.setTargetPosition(iPos);
                 upper_left.setTargetPosition(iPos);
                 duck_wheel.setTargetPosition(iPos);
+                another_duck_wheel.setTargetPosition(iPos);
                 Da_Winch.setTargetPosition(iPos);
                 Linac.setTargetPosition(iPos);
             default :
@@ -300,8 +310,8 @@ public class Mrv_Robot
                 return upper_right.isBusy();
             case LOWER_RIGHT: // lower right
                 return lower_right.isBusy();
-            case DUCK_WHEEL:
-                return duck_wheel.isBusy();
+            case DUCK_WHEELS:
+                return duck_wheel.isBusy() && another_duck_wheel.isBusy();
             case LIN_AC:
                 return Linac.isBusy();
             case DA_WINCHI:
