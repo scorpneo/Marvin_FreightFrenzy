@@ -199,7 +199,7 @@ public class Mrv_Manual extends LinearOpMode {
             }
         }
 
-            float turnDir = gamepad2.left_stick_x/3 + gamepad1.right_stick_x;
+            float turnDir = gamepad1.right_stick_x;
             float moveDir = gamepad1.left_stick_y;
             float strafeDir = gamepad1.left_stick_x;
 

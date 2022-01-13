@@ -8,7 +8,6 @@ import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.acmerobotics.roadrunner.trajectory.constraints.TrajectoryVelocityConstraint;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
@@ -33,8 +32,7 @@ import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.STOP_AND_RESET_ENC
 
 @Config
 @Autonomous(group = "drive")
-@Disabled
-public class Mrv_Autonomous extends LinearOpMode {
+public class Mrv_AutoBlue2 extends LinearOpMode {
 
     enum MrvAllianceField
     {
@@ -68,7 +66,7 @@ public class Mrv_Autonomous extends LinearOpMode {
     // VUFORIA Key
     public static final String VUFORIA_LICENSE_KEY = "AZRnab7/////AAABmTUhzFGJLEyEnSXEYWthkjhGRzu8klNOmOa9WEHaryl9AZCo2bZwq/rtvx83YRIgV60/Jy/2aivoXaHNzwi7dEMGoaglSVmdmzPF/zOPyiz27dDJgLVvIROD8ww7lYzL8eweJ+5PqLAavvX3wgrahkOxxOCNeKG9Tl0LkbS5R11ATXL7LLWeUv5FP1aDNgMZvb8P/u96OdOvD6D40Nf01Xf+KnkF5EXwNQKk1r7qd/hiv9h80gvBXMFqMkVgUyogwEnlK2BfmeUhGVm/99BiwwW65LpKSaLVPpW/6xqz9SyPgZ/L/vshbWgSkTB/KoERiV8MsW79RPUuQS6NTOLY32I/kukmsis3MFst5LP/d3gx";
     private static final String TFOD_MODEL_ASSET = "FreightFrenzy_BCDM.tflite";
-//    private static final String TFOD_MODEL_ASSET = "FreightFrenzy_Aztechs.tflite";
+    //    private static final String TFOD_MODEL_ASSET = "FreightFrenzy_Aztechs.tflite";
     // Field Dimensions
     private static final float mmPerInch        = 25.4f;
     private static final float mmTargetHeight   = 6 * mmPerInch;          // the height of the center of the target image above the floor
@@ -110,22 +108,26 @@ public class Mrv_Autonomous extends LinearOpMode {
     public static double SecPosRightMax = 640;
 
     // Trajectory sequencing
+    public static Pose2d blue_1_pose_estimate      = new Pose2d(-36, 64, Math.toRadians(-90));
     public static Pose2d red_1_pose_estimate       = new Pose2d(-36, -64, Math.toRadians(90));
-    public static Pose2d red_2_pose_estimate       = new Pose2d( 12, -64, Math.toRadians(90));
-    public static Pose2d blue_2_pose_estimate      = new Pose2d(-36, 64, Math.toRadians(90));
-    public static Pose2d red_shipping_hub_pos      = new Pose2d(-12, -48, Math.toRadians(40));
-    public static Pose2d red_duck_wheel_pos        = new Pose2d(  0, -48, Math.toRadians(130));
-    public static Pose2d red_warehouse_enter_pos   = new Pose2d( 24, -64, Math.toRadians(0));
-    public static Pose2d red_warehouse_pos         = new Pose2d( 40, -64, Math.toRadians(0));
-    public static Pose2d red_park_pos              = new Pose2d( 64, -36, Math.toRadians(90));
 
-    public static Pose2d blue_1_pose_estimate      = new Pose2d( -36, 64, Math.toRadians(-90));
+    public static Pose2d blue_2_pose_estimate      = new Pose2d( 12, 64, Math.toRadians(-90));
+    public static Pose2d red_2_pose_estimate       = new Pose2d( 12, -64, Math.toRadians(90));
 
     public static Pose2d blue_shipping_hub_pos     = new Pose2d(-12,  48, Math.toRadians(-90));
+    public static Pose2d red_shipping_hub_pos      = new Pose2d(-12, -48, Math.toRadians(90));
+
     public static Pose2d blue_duck_wheel_pos       = new Pose2d(-61, 56, Math.toRadians(-35));
+    public static Pose2d red_duck_wheel_pos        = new Pose2d(-61, -56, Math.toRadians(35));
+
     public static Pose2d blue_warehouse_enter_pos  = new Pose2d( 24, 64, Math.toRadians(0));
+    public static Pose2d red_warehouse_enter_pos   = new Pose2d( 24, -64, Math.toRadians(0));
+
     public static Pose2d blue_warehouse_pos        = new Pose2d( 40, 64, Math.toRadians(0 ));
+    public static Pose2d red_warehouse_pos         = new Pose2d( 40, -64, Math.toRadians(0));
+
     public static Pose2d blue_park_pos             = new Pose2d( 64, 36, Math.toRadians(90));
+    public static Pose2d red_park_pos              = new Pose2d( 64, -36, Math.toRadians(-90));
 
     public static double slower_speed = 25;
     public static double slower_accel = 25;
@@ -149,7 +151,7 @@ public class Mrv_Autonomous extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-         marvyn.init(hardwareMap);
+        marvyn.init(hardwareMap);
 
         // init Dashboard
         mrvDashboard = FtcDashboard.getInstance();
@@ -212,14 +214,14 @@ public class Mrv_Autonomous extends LinearOpMode {
 
         buildTrajectories();
 
-        marvyn.mecanumDrive.setPoseEstimate(blue_1_pose_estimate);
-        marvyn.mecanumDrive.followTrajectorySequence(mrvBlue1);
+        marvyn.mecanumDrive.setPoseEstimate(blue_2_pose_estimate);
+        marvyn.mecanumDrive.followTrajectorySequence(mrvBlue2);
 
     }
 
     int MrvGetWarehouseLevel(MrvAllianceField field )
     {
-        int PyraPos = 0;
+        int PyraPos = 2;
         if(mrvTfod != null && opModeIsActive())
         {
             boolean bDuckFound = false;
@@ -452,19 +454,21 @@ public class Mrv_Autonomous extends LinearOpMode {
 //                .build()
 //        ;
 //
-        mrvBlue1 = marvyn.mecanumDrive.trajectorySequenceBuilder(blue_1_pose_estimate)
+        mrvBlue2 = marvyn.mecanumDrive.trajectorySequenceBuilder(blue_2_pose_estimate)
                 //drive to hub
                 .lineToLinearHeading(blue_shipping_hub_pos)
                 .addTemporalMarker(() -> {
                     FreightDropOff(mrvWarehouseLevel);
                 })
                 .waitSeconds(2)
-                .lineToLinearHeading(blue_duck_wheel_pos)
-                //do duck
-                .addTemporalMarker(() -> {
-                    SpinDuckWheel();
-                })
-                .waitSeconds(2)
+                // backup
+                .lineToLinearHeading(new Pose2d( blue_shipping_hub_pos.getX()-8, blue_shipping_hub_pos.getY()+10, blue_shipping_hub_pos.getHeading() ))
+                //Don't do duck
+//                .lineToLinearHeading(blue_duck_wheel_pos)
+//                .addTemporalMarker(() -> {
+//                    SpinDuckWheel();
+//                })
+//                .waitSeconds(2)
                 //go to warehouse entrance
                 .lineToLinearHeading(blue_warehouse_enter_pos)
                 //enter warehouse

@@ -11,23 +11,32 @@ public class MeepMeepTesting {
     public static void main(String args[]) {
         MeepMeep mm = new MeepMeep(800);
 
+        Pose2d blue_1_pose_estimate      = new Pose2d( -36, 64, Math.toRadians(-90));
+
+        Pose2d blue_shipping_hub_pos     = new Pose2d(-12,  48, Math.toRadians(-90));
+        Pose2d blue_duck_wheel_pos       = new Pose2d(-55, 55, Math.toRadians(-45));
+        Pose2d blue_warehouse_enter_pos  = new Pose2d( 24, 64, Math.toRadians(0));
+        Pose2d blue_warehouse_pos        = new Pose2d( 40, 64, Math.toRadians(0 ));
+        Pose2d blue_park_pos             = new Pose2d( 64, 36, Math.toRadians(90));
+
+
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(mm)
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 13)
                 .followTrajectorySequence(drive ->
                         //red duck
-                        drive.trajectorySequenceBuilder(new Pose2d(12, -62, Math.toRadians(90)))
+                        drive.trajectorySequenceBuilder(blue_1_pose_estimate)
                                 //target pos
-                                .lineToLinearHeading(new Pose2d(0,-48,Math.toRadians(130)))
-                                //spline
-                                .lineToLinearHeading(new Pose2d(-55,-55,Math.toRadians(90)))
-                                //enter
-                                .lineToLinearHeading(new Pose2d(24,-64,Math.toRadians(0)))
-                                //warehouse
-                                .lineToLinearHeading(new Pose2d(40,-64, Math.toRadians(0)))
-                                //park
-                                .lineToLinearHeading( new Pose2d(64,-36, Math.toRadians(90)))
+                                .lineToLinearHeading(blue_shipping_hub_pos)
 
+                                .lineToLinearHeading(blue_duck_wheel_pos)
+                                //do duck
+                                //go to warehouse entrance
+                                .lineToLinearHeading(blue_warehouse_enter_pos)
+                                //enter warehouse
+                                .lineToLinearHeading(blue_warehouse_pos)
+                                //park
+                                .lineToLinearHeading(blue_park_pos)
                                 .build()
                 );
 

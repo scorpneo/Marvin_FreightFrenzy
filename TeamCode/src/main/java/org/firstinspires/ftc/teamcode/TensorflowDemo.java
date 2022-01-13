@@ -51,6 +51,7 @@ package org.firstinspires.ftc.teamcode;
  * is explained below.
  */
 @TeleOp(name = "Tensorflow demo", group = "Demo")
+@Disabled
 
 public class TensorflowDemo extends LinearOpMode {
     /* Note: This sample uses the all-objects Tensor Flow model (FreightFrenzy_BCDM.tflite), which contains

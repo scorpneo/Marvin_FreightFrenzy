@@ -32,6 +32,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -48,6 +49,7 @@ import java.util.List;
 
 @Config
 @Autonomous(name="Blue Warehouse", group="Autonomous Mode")
+@Disabled
 public class Mrv_BlueAllianceWarehouse extends LinearOpMode {
 
     Mrv_Robot robot = new Mrv_Robot();   // Use a Pushbot's hardware

@@ -34,6 +34,7 @@ package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 // Java Utils
@@ -77,6 +78,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 @TeleOp(name="Mrv_MyFirstMove", group="Manual mode")
 @Config
+@Disabled
 public class MrvFirstMove extends LinearOpMode {
 
     enum MrvAllianceFieldPos

@@ -123,7 +123,7 @@ public class Mrv_Robot
         lower_left.setDirection(DcMotor.Direction.REVERSE); //- used to be
         lower_right.setDirection(DcMotor.Direction.FORWARD); //+ used to be
         duck_wheel.setDirection(DcMotor.Direction.FORWARD);
-        another_duck_wheel.setDirection(DcMotor.Direction.FORWARD);
+        another_duck_wheel.setDirection(DcMotor.Direction.REVERSE);
         Linac.setDirection(DcMotor.Direction.FORWARD);
         Da_Winch.setDirection(DcMotor.Direction.FORWARD);
 
