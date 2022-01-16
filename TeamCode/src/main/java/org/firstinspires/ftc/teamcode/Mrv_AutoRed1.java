@@ -10,6 +10,7 @@ import com.acmerobotics.roadrunner.trajectory.constraints.TrajectoryVelocityCons
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
@@ -24,6 +25,7 @@ import java.util.List;
 
 import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_WITHOUT_ENCODER;
 import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.STOP_AND_RESET_ENCODER;
+import static com.qualcomm.robotcore.util.ElapsedTime.Resolution.MILLISECONDS;
 
 /*
  * This is an example of a more complex path to really test the tuning.
@@ -108,23 +110,29 @@ public class Mrv_AutoRed1 extends LinearOpMode {
     public static double SecPosRightMax = 640;
 
     // Trajectory sequencing
-    public static Pose2d blue_1_pose_estimate      = new Pose2d(-36, 64, Math.toRadians(-90));
-    public static Pose2d red_1_pose_estimate       = new Pose2d(-36, -64, Math.toRadians(90));
+    public static Pose2d blue_1_pose_estimate      = new Pose2d(-33.75, 62.625, Math.toRadians(-90));
+    public static Pose2d red_1_pose_estimate       = new Pose2d(-37, -62.625, Math.toRadians(90));
 
-    public static Pose2d blue_2_pose_estimate      = new Pose2d( 12, 64, Math.toRadians(-90));
-    public static Pose2d red_2_pose_estimate       = new Pose2d( 12, -64, Math.toRadians(90));
+    public static Pose2d blue_2_pose_estimate      = new Pose2d( 13, 62.625, Math.toRadians(-90));
+    public static Pose2d red_2_pose_estimate       = new Pose2d( 9.75, -62.625, Math.toRadians(90));
 
-    public static Pose2d blue_shipping_hub_pos     = new Pose2d(-12,  48, Math.toRadians(-90));
-    public static Pose2d red_shipping_hub_pos      = new Pose2d(-12, -48, Math.toRadians(90));
+    public static Pose2d blue_1_shipping_hub_pos = new Pose2d(-21.5,  45.75, Math.toRadians(-70));
+    public static Pose2d red1_shipping_hub_pos      = new Pose2d(-21.5, -45.75, Math.toRadians(70));
 
-    public static Pose2d blue_duck_wheel_pos       = new Pose2d(-61, 56, Math.toRadians(-35));
-    public static Pose2d red_duck_wheel_pos        = new Pose2d(-61, -56, Math.toRadians(35));
+    public static Pose2d blue_2_shipping_hub_pos     = new Pose2d(-1.625,  45.75, Math.toRadians(-110));
+    public static Pose2d red2_shipping_hub_pos      = new Pose2d(-1.625, -45.75, Math.toRadians(110));
 
-    public static Pose2d blue_warehouse_enter_pos  = new Pose2d( 24, 64, Math.toRadians(0));
-    public static Pose2d red_warehouse_enter_pos   = new Pose2d( 24, -64, Math.toRadians(0));
+    public static Pose2d blue_duck_wheel_pos       = new Pose2d(-59.75, 55, Math.toRadians(0));
+    public static Pose2d red_duck_wheel_pos        = new Pose2d(-59.75, -55, Math.toRadians(0));
 
-    public static Pose2d blue_warehouse_pos        = new Pose2d( 40, 64, Math.toRadians(0 ));
-    public static Pose2d red_warehouse_pos         = new Pose2d( 40, -64, Math.toRadians(0));
+    public static Pose2d blue_warehouse_enter_pos  = new Pose2d( 11, 64.75, Math.toRadians(0));
+    public static Pose2d red_warehouse_enter_pos   = new Pose2d( 11, -64.75, Math.toRadians(0));
+
+    public static Pose2d blue_warehouse_pos        = new Pose2d( 36.75, 64.75, Math.toRadians(0 ));
+    public static Pose2d red_warehouse_pos         = new Pose2d( 36.75, -64.75, Math.toRadians(0));
+
+    public static Pose2d blue_storage_pos          = new Pose2d( -59.75, 35.5, Math.toRadians(0));
+    public static Pose2d red_storage_pos          = new Pose2d( -59.75, -35.5, Math.toRadians(0));
 
     public static Pose2d blue_park_pos             = new Pose2d( 64, 36, Math.toRadians(90));
     public static Pose2d red_park_pos              = new Pose2d( 64, -36, Math.toRadians(-90));
@@ -191,7 +199,7 @@ public class Mrv_AutoRed1 extends LinearOpMode {
         // Set the claw to hold the preloaded element
         marvyn.The_Claw.setPosition(Claw_Close_Pos);
         sleep(2000);
-        marvyn.Wristy.setPosition(Wrist_Parallel_to_Linac);
+
 
         // Startup camera
         mrvDashboard.startCameraStream(mrvTfod, 0); // start streaming camera
@@ -207,7 +215,7 @@ public class Mrv_AutoRed1 extends LinearOpMode {
         mrvTelemetry.update();
 
         waitForStart();
-
+        marvyn.Wristy.setPosition(Wrist_Parallel_to_Linac);
         mrvWarehouseLevel = MrvGetWarehouseLevel(MrvAllianceField.BLUE);
         mrvTelemetry.addData("Warehouse Level", mrvWarehouseLevel);
         mrvTelemetry.update();
@@ -215,8 +223,13 @@ public class Mrv_AutoRed1 extends LinearOpMode {
         buildTrajectories();
 
         marvyn.mecanumDrive.setPoseEstimate(red_1_pose_estimate);
-        marvyn.mecanumDrive.followTrajectorySequence(mrvRed1);
 
+        ElapsedTime time = new ElapsedTime(MILLISECONDS);
+        time.reset();
+        time.startTime();
+        marvyn.mecanumDrive.followTrajectorySequence(mrvRed1);
+        mrvTelemetry.addData("time", time);
+        mrvTelemetry.update();
     }
 
     int MrvGetWarehouseLevel(MrvAllianceField field )
@@ -309,19 +322,7 @@ public class Mrv_AutoRed1 extends LinearOpMode {
                 }
                 marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
 
-                sleep(500);
 
-                // Release the claw
-                marvyn.The_Claw.setPosition(Claw_Open_Pos);
-                sleep(1000);
-
-                // retract Linac
-                marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, 0);
-                marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 1);
-                while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.LIN_AC) < 0) {
-                    idle();
-                }
-                marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
                 break;
             case 1: // MIDDLE
                 iDawinchiDropoffPosition = (int) (Dawinchi_Ticks_Per_Rev * DaWinchi_Level1_Dropoff);
@@ -342,19 +343,6 @@ public class Mrv_AutoRed1 extends LinearOpMode {
                 marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, iLinacDropoffPosition);
                 marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, -1);
                 while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.LIN_AC) > iLinacDropoffPosition) {
-                    idle();
-                }
-                marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
-
-                sleep(500);
-                // Release the claw
-                marvyn.The_Claw.setPosition(Claw_Open_Pos);
-                sleep(1000);
-
-                // retract Linac
-                marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, 0);
-                marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 1);
-                while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.LIN_AC) < 0) {
                     idle();
                 }
                 marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
@@ -383,94 +371,47 @@ public class Mrv_AutoRed1 extends LinearOpMode {
                     idle();
                 }
                 marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
-
-                // Release the claw
-                sleep(500);
-                marvyn.The_Claw.setPosition(Claw_Open_Pos);
-                sleep(1000);
-
-                // retract Linac
-                marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, 0);
-                marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 1);
-                while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.LIN_AC) < 0) {
-                    idle();
-                }
-                marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
                 break;
         }
     }
 
+
     void buildTrajectories()
     {
-        // Red 1 Trajectory
-//        mrvRed1 = marvyn.mecanumDrive.trajectorySequenceBuilder(red_1_pose_estimate)
-//                //drive to hub
-//                .lineToLinearHeading(red_shipping_hub_pos)
-//                //TODO: set exact end pose for duck spline
-//                .lineToLinearHeading(red_duck_wheel_pos)
-//                //do duck
-//                .waitSeconds(3)
-//                //go to warehouse entrance
-//                .lineToLinearHeading(red_warehouse_enter_pos)
-//                //enter warehouse
-//                .lineToLinearHeading(red_warehouse_pos)
-//                //park
-//                .lineToLinearHeading(red_park_pos)
-//
-//                .build()
-//        ;
-//
-//        mrvRed2 = marvyn.mecanumDrive.trajectorySequenceBuilder(red_2_pose_estimate)
-//                //drive to hub
-//                .lineToLinearHeading(red_shipping_hub_pos)
-//                //TODO: set exact end pose for duck spline
-//                .lineToLinearHeading(red_duck_wheel_pos)
-//                //do duck
-//                .waitSeconds(3)
-//                //go to warehouse entrance
-//                .lineToLinearHeading(red_warehouse_enter_pos)
-//                //enter warehouse
-//                .lineToLinearHeading(red_warehouse_pos)
-//                //park
-//                .lineToLinearHeading(red_park_pos)
-//
-//                .build()
-//        ;
-//
-//        mrvBlue2 = marvyn.mecanumDrive.trajectorySequenceBuilder(blue_1_pose_estimate)
-//                //drive to hub
-//                .lineToLinearHeading(blue_shipping_hub_pos)
-//                //TODO: set exact end pose for duck spline
-//                .lineToLinearHeading(blue_duck_wheel_pos)
-//                //do duck
-//                .waitSeconds(3)
-//                //go to warehouse entrance
-//                .lineToLinearHeading(blue_warehouse_enter_pos)
-//                //enter warehouse
-//                .lineToLinearHeading(blue_warehouse_pos)
-//                //park
-//                .lineToLinearHeading(blue_park_pos)
-//
-//                .build()
-//        ;
 //
         mrvRed1 = marvyn.mecanumDrive.trajectorySequenceBuilder(red_1_pose_estimate)
                 //drive to hub
-                .lineToLinearHeading(red_shipping_hub_pos)
+                .lineToLinearHeading(red1_shipping_hub_pos)
                 .addTemporalMarker(() -> {
                     FreightDropOff(mrvWarehouseLevel);
+                })
+                //Release the Claw
+                .waitSeconds(1)
+                .addTemporalMarker(()->{
+                    marvyn.The_Claw.setPosition(Claw_Open_Pos);
+                })
+                .waitSeconds(0.5)
+                .addTemporalMarker(()->{
+                    // retract Linac
+                    marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, 0);
+                    marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 1);
+                    while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.LIN_AC) < 0) {
+                        idle();
+                    }
+                    marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
                 })
                 .waitSeconds(2)
                 .lineToLinearHeading(red_duck_wheel_pos)
                 //do duck
                 .addTemporalMarker(() -> {
-                    SpinDuckWheel();
+                    marvyn.setPower(Mrv_Robot.MrvMotors.DUCK_WHEELS, 0.25);
                 })
-                .waitSeconds(2)
-                //go to warehouse entrance
-                .lineToLinearHeading(red_warehouse_enter_pos)
+                .waitSeconds(4)
+                .addTemporalMarker(() ->{
+                    marvyn.setPower(Mrv_Robot.MrvMotors.DUCK_WHEELS, 0);
+                })
                 //enter warehouse
-                .lineToLinearHeading(red_warehouse_pos)
+                .lineToLinearHeading(red_storage_pos)
 
                 .build()
         ;
@@ -487,7 +428,7 @@ public class Mrv_AutoRed1 extends LinearOpMode {
     void SpinDuckWheel()
     {
         sleep(1000);
-        marvyn.setPower(Mrv_Robot.MrvMotors.DUCK_WHEELS, 0.25);
+        marvyn.setPower(Mrv_Robot.MrvMotors.DUCK_WHEELS, 0.25*-1);
         sleep(2500);
         marvyn.setPower(Mrv_Robot.MrvMotors.DUCK_WHEELS, 0);
         return;
@@ -503,6 +444,7 @@ public class Mrv_AutoRed1 extends LinearOpMode {
         }
         return result;
     }
+
 
 
 }
