@@ -78,7 +78,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 @TeleOp(name="Mrv_MyFirstMove", group="Manual mode")
 @Config
-@Disabled
+//@Disabled
 public class MrvFirstMove extends LinearOpMode {
 
     enum MrvAllianceFieldPos

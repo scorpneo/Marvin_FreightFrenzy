@@ -67,8 +67,8 @@ public class Mrv_Manual extends LinearOpMode {
 
     // TODO: This used to be 5 before, why not 10? [Lavanya]
     public static double speedAdjust = 5;
-    public static double linacAdjust = 5;
-    public static double dawinchAdjust = 5;
+    public static double linacAdjust = 10;
+    public static double dawinchAdjust = 8;
     private boolean assumingGrabPosition = false;
     private boolean changingWheelSpeed = false;
     private boolean changingLinacSpeed = false;
