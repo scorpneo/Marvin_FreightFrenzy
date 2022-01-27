@@ -29,7 +29,7 @@ import static com.qualcomm.robotcore.util.ElapsedTime.Resolution.MILLISECONDS;
 
 @Config
 @Autonomous(group = "drive")
-public class Mrv_AutoBlue1 extends LinearOpMode {
+public class MrvAutonomous extends LinearOpMode {
 
     enum MrvAllianceField
     {
@@ -63,7 +63,7 @@ public class Mrv_AutoBlue1 extends LinearOpMode {
     // VUFORIA Key
     public static final String VUFORIA_LICENSE_KEY = "AZRnab7/////AAABmTUhzFGJLEyEnSXEYWthkjhGRzu8klNOmOa9WEHaryl9AZCo2bZwq/rtvx83YRIgV60/Jy/2aivoXaHNzwi7dEMGoaglSVmdmzPF/zOPyiz27dDJgLVvIROD8ww7lYzL8eweJ+5PqLAavvX3wgrahkOxxOCNeKG9Tl0LkbS5R11ATXL7LLWeUv5FP1aDNgMZvb8P/u96OdOvD6D40Nf01Xf+KnkF5EXwNQKk1r7qd/hiv9h80gvBXMFqMkVgUyogwEnlK2BfmeUhGVm/99BiwwW65LpKSaLVPpW/6xqz9SyPgZ/L/vshbWgSkTB/KoERiV8MsW79RPUuQS6NTOLY32I/kukmsis3MFst5LP/d3gx";
     //private static final String TFOD_MODEL_ASSET = "FreightFrenzy_BCDM.tflite";
-      private static final String TFOD_MODEL_ASSET = "FreightFrenzy_AztechsTSE1.tflite";
+    private static final String TFOD_MODEL_ASSET = "FreightFrenzy_AztechsTSE1.tflite";
     // Field Dimensions
     private static final float mmPerInch        = 25.4f;
     private static final float mmTargetHeight   = 6 * mmPerInch;          // the height of the center of the target image above the floor
@@ -96,53 +96,17 @@ public class Mrv_AutoBlue1 extends LinearOpMode {
     public static double TFodZoomFactor = 1;
     public static int sleepyTime = 5000;
 
-
-    // TFOD detection
-//    public static double FirstPosMax = 250;
-//    public static double FirstPosMin = 50;
-//    public static double SecPosMax = 600;
-//    public static double SecPosMin = 400;
-//
-//
-//    // Trajectory sequencing
-//    public static Pose2d blue_1_pose_estimate      = new Pose2d(-33.75, 62.625, Math.toRadians(-90));
-//    public static Pose2d red_1_pose_estimate       = new Pose2d(-37, -62.625, Math.toRadians(90));
-//
-//    public static Pose2d blue_2_pose_estimate      = new Pose2d( 13, 62.625, Math.toRadians(-90));
-//    public static Pose2d red_2_pose_estimate       = new Pose2d( 9.75, -62.625, Math.toRadians(90));
-//
-//    public static Pose2d blue_1_shipping_hub_pos = new Pose2d(-21.5,  45.75, Math.toRadians(-70));
-//    public static Pose2d red1_shipping_hub_pos      = new Pose2d(-21.5, -45.75, Math.toRadians(70));
-//
-//    public static Pose2d blue_2_shipping_hub_pos     = new Pose2d(-1.625,  45.75, Math.toRadians(-110));
-//    public static Pose2d red2_shipping_hub_pos      = new Pose2d(-1.625, -45.75, Math.toRadians(110));
-//
-//    public static Pose2d blue_duck_wheel_pos       = new Pose2d(-59.75, 55, Math.toRadians(0));
-//    public static Pose2d red_duck_wheel_pos        = new Pose2d(-59.75, -55, Math.toRadians(0));
-//
-//    public static Pose2d blue_warehouse_enter_pos  = new Pose2d( 11, 64.75, Math.toRadians(0));
-//    public static Pose2d red_warehouse_enter_pos   = new Pose2d( 11, -64.75, Math.toRadians(0));
-//
-//    public static Pose2d blue_warehouse_pos        = new Pose2d( 36.75, 64.75, Math.toRadians(0 ));
-//    public static Pose2d red_warehouse_pos         = new Pose2d( 36.75, -64.75, Math.toRadians(0));
-//
-//    public static Pose2d blue_storage_pos          = new Pose2d( -59.75, 35.5, Math.toRadians(0));
-//    public static Pose2d red_storage_pos          = new Pose2d( -59.75, -35.5, Math.toRadians(0));
-//
-//    public static Pose2d blue_park_pos             = new Pose2d( 64, 36, Math.toRadians(90));
-//    public static Pose2d red_park_pos              = new Pose2d( 64, -36, Math.toRadians(-90));
-
-
     public static double slower_speed = 25;
     public static double slower_accel = 25;
 
     // Drop of Warehouse
     public static int mrvWarehouseLevel;
-    public static double DaWinchi_Level0_Dropoff = 0.5;
-    public static double DaWinchi_Level1_Dropoff = 0.10;
-    public static double DaWinchi_Level2_Dropoff = 0.45;
+    public static double DaWinchi_Level0_Dropoff = 0.7;
+    public static double DaWinchi_Level1_Dropoff = 0.15;
+    public static double DaWinchi_Level2_Dropoff = 0.55;
     public static double DaWinchi_pickup_Revs = 0.82;
     public static int dropOffLevel = 0;
+    public static double DaWinchi_Power = 1.0;
 
     public static double Linac_Dropoff_Revs = 1.3;
     public static double Linac_Pickup_Revs = 2.3;
@@ -213,24 +177,33 @@ public class Mrv_AutoBlue1 extends LinearOpMode {
 
         waitForStart();
         marvyn.Wristy.setPosition(Wrist_Parallel_to_Linac);
-        mrvWarehouseLevel = MrvGetWarehouseLevel(MrvAllianceField.BLUE);
-        FtcDashboard.getInstance().sendTelemetryPacket(mrvDashboardTelemetryPacket);
-        mrvDashboardTelemetryPacket = new TelemetryPacket();
-
-        mrvTelemetry.addData("Warehouse Level", mrvWarehouseLevel);
-        mrvTelemetry.update();
-
-        buildTrajectories();
+//        mrvWarehouseLevel = MrvGetWarehouseLevel(MrvAllianceField.BLUE);
+//        FtcDashboard.getInstance().sendTelemetryPacket(mrvDashboardTelemetryPacket);
+//        mrvDashboardTelemetryPacket = new TelemetryPacket();
+//
+//        mrvTelemetry.addData("Warehouse Level", mrvWarehouseLevel);
+//        mrvTelemetry.update();
+//
+//        buildTrajectories();
         //figureSkating();
+
+        FreightDropOff(dropOffLevel);
+        marvyn.Wristy.setPosition(0.1);
+        mrvDashboard.sendTelemetryPacket(mrvDashboardTelemetryPacket);
+        mrvDashboardTelemetryPacket = new TelemetryPacket();
         //FreightPickUp();
+
+        while(!isStopRequested()) {
+            idle();
+        }
         marvyn.mecanumDrive.setPoseEstimate(marvyn.blue_1_pose_estimate);
 
         ElapsedTime time = new ElapsedTime(MILLISECONDS);
         time.reset();
         time.startTime();
-        marvyn.mecanumDrive.followTrajectorySequence(mrvBlue1);
+        //marvyn.mecanumDrive.followTrajectorySequence(mrvBlue1);
         mrvTelemetry.addData("time", time);
-        mrvTelemetry.update();
+        //mrvTelemetry.update();
 
     }
 
@@ -260,7 +233,7 @@ public class Mrv_AutoBlue1 extends LinearOpMode {
 
                     //if (recognition.getLabel()== "Duck") {
                     if (recognition.getLabel()== "Aztechs_TSE" && recognition.getConfidence() > 0.8) {
-                            if (marvyn.FirstPosMin <= mdpt && mdpt <= marvyn.FirstPosMax ) {
+                        if (marvyn.FirstPosMin <= mdpt && mdpt <= marvyn.FirstPosMax ) {
                             PyraPos = 1;
                         } else if (marvyn.SecPosMin <= mdpt && mdpt <= marvyn.SecPosMax) {
                             PyraPos = 2;
@@ -307,17 +280,22 @@ public class Mrv_AutoBlue1 extends LinearOpMode {
         switch(level)
         {
             case 0: // BOTTOM
-                iDawinchiDropoffPosition = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level0_Dropoff);
+                iDawinchiDropoffPosition = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level0_Dropoff *-1.0 );
 
                 // Set winch to 0 level
+                mrvDashboardTelemetryPacket.put("Setting Dawinchi to Level", level);
+                mrvDashboardTelemetryPacket.put("Calculated Dawinchi dropoff pos in ticks = ", iDawinchiDropoffPosition);
                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, STOP_AND_RESET_ENCODER);
                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, RUN_WITHOUT_ENCODER);
                 marvyn.setTargetPosition(Mrv_Robot.MrvMotors.DA_WINCHI, iDawinchiDropoffPosition);
-                marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 1);
-                while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI) < iDawinchiDropoffPosition) {
+                marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, -1 * DaWinchi_Power);
+                while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI) > iDawinchiDropoffPosition) {
+                    mrvDashboardTelemetryPacket.put("current Dawinchi Position = ", marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI));
                     idle();
                 }
+                mrvDashboardTelemetryPacket.put("End Dawinchi Position = ", marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI));
                 marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
+
 
                 // set Linac to drop off position
                 int iPos = -1*marvyn.Linac_Ticks_Per_Rev;
@@ -333,16 +311,20 @@ public class Mrv_AutoBlue1 extends LinearOpMode {
 
                 break;
             case 1: // MIDDLE
-                iDawinchiDropoffPosition = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level1_Dropoff);
+                iDawinchiDropoffPosition = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level1_Dropoff *-1.0);
+
+                mrvDashboardTelemetryPacket.put("Setting Dawinchi to Level", level);
+                mrvDashboardTelemetryPacket.put("Calculated Dawinchi dropoff pos in ticks = ", iDawinchiDropoffPosition);
 
                 // Set winch to 2 level
                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, STOP_AND_RESET_ENCODER);
                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, RUN_WITHOUT_ENCODER);
                 marvyn.setTargetPosition(Mrv_Robot.MrvMotors.DA_WINCHI, iDawinchiDropoffPosition);
-                marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 1);
-                while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI) < iDawinchiDropoffPosition) {
+                marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, -1 * DaWinchi_Power);
+                while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI) > iDawinchiDropoffPosition) {
                     idle();
                 }
+                mrvDashboardTelemetryPacket.put("current Dawinchi Position = ", marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI));
                 marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
 
                 // set Linac to drop off position
@@ -357,17 +339,20 @@ public class Mrv_AutoBlue1 extends LinearOpMode {
                 break;
             case 2: // TOP
                 iDawinchiDropoffPosition = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level2_Dropoff);
-                iDawinchiDropoffPosition = -1*iDawinchiDropoffPosition;
+
+                mrvDashboardTelemetryPacket.put("Setting Dawinchi to Level", level);
+                mrvDashboardTelemetryPacket.put("Calculated Dawinchi dropoff pos in ticks = ", iDawinchiDropoffPosition);
 
                 int iPos2 = (int)(-1.3*marvyn.Linac_Ticks_Per_Rev);
                 // Set winch to 2 level
                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, STOP_AND_RESET_ENCODER);
                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, RUN_WITHOUT_ENCODER);
                 marvyn.setTargetPosition(Mrv_Robot.MrvMotors.DA_WINCHI, iDawinchiDropoffPosition);
-                marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, -1);
-                while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI) > iDawinchiDropoffPosition) {
+                marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 1 * DaWinchi_Power);
+                while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI) < iDawinchiDropoffPosition) {
                     idle();
                 }
+                mrvDashboardTelemetryPacket.put("current Dawinchi Position = ", marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI));
                 marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
 
                 // set Linac to drop off position
@@ -452,22 +437,23 @@ public class Mrv_AutoBlue1 extends LinearOpMode {
     void FreightPickUp()
     {
 
-        marvyn.The_Claw.setPosition(Claw_Open_Pos);
-        marvyn.Wristy.setPosition(Wrist_Parallel_to_ground);
-
-        int iLinacPickupPos = (int)(Linac_Pickup_Revs * marvyn.Linac_Ticks_Per_Rev);
-        marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, STOP_AND_RESET_ENCODER);
-        marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, RUN_WITHOUT_ENCODER);
-        marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, iLinacPickupPos);
         ElapsedTime timeprofiler = new ElapsedTime(MILLISECONDS);
         timeprofiler.reset();
         timeprofiler.startTime();
-        marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 1);
-        while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.LIN_AC) < iLinacPickupPos) {
-            idle();
-        }
-        marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
-        mrvTelemetry.addData("Time to extend LINAC", timeprofiler.time());
+
+//        marvyn.The_Claw.setPosition(Claw_Open_Pos);
+//        marvyn.Wristy.setPosition(Wrist_Parallel_to_ground);
+//
+//        int iLinacPickupPos = (int)(Linac_Pickup_Revs * marvyn.Linac_Ticks_Per_Rev);
+//        marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, STOP_AND_RESET_ENCODER);
+//        marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, RUN_WITHOUT_ENCODER);
+//        marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, iLinacPickupPos);
+//        marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 1);
+//        while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.LIN_AC) < iLinacPickupPos) {
+//            idle();
+//        }
+//        marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
+//        mrvTelemetry.addData("Time to extend LINAC", timeprofiler.time());
 
         int iDawinchiDropoffPosition = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_pickup_Revs);
 
@@ -484,32 +470,32 @@ public class Mrv_AutoBlue1 extends LinearOpMode {
         marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
         mrvTelemetry.addData("Time to drop WINCH", timeprofiler.time());
 
-        sleep(500);
-        marvyn.The_Claw.setPosition(Claw_Close_Pos);
-        sleep(1000);
-
-        // Set winch to 0 level
-        marvyn.setTargetPosition(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
-        timeprofiler.reset();
-        timeprofiler.startTime();
-        marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, -1);
-        while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI) > 0) {
-            idle();
-        }
-        marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
-        mrvTelemetry.addData("Time to raise WINCH", timeprofiler.time());
-
-        marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, RUN_WITHOUT_ENCODER);
-        marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, 0);
-        timeprofiler.reset();
-        timeprofiler.startTime();
-        marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, -1);
-        while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.LIN_AC) > 0) {
-            idle();
-        }
-        marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
-        mrvTelemetry.addData("Time to retract LINAC", timeprofiler.time());
-        mrvTelemetry.update();
+//        sleep(500);
+//        marvyn.The_Claw.setPosition(Claw_Close_Pos);
+//        sleep(1000);
+//
+//        // Set winch to 0 level
+//        marvyn.setTargetPosition(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
+//        timeprofiler.reset();
+//        timeprofiler.startTime();
+//        marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, -1);
+//        while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI) > 0) {
+//            idle();
+//        }
+//        marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
+//        mrvTelemetry.addData("Time to raise WINCH", timeprofiler.time());
+//
+//        marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, RUN_WITHOUT_ENCODER);
+//        marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, 0);
+//        timeprofiler.reset();
+//        timeprofiler.startTime();
+//        marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, -1);
+//        while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.LIN_AC) > 0) {
+//            idle();
+//        }
+//        marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
+//        mrvTelemetry.addData("Time to retract LINAC", timeprofiler.time());
+//        mrvTelemetry.update();
 
         sleep(4000);
     }
@@ -595,5 +581,6 @@ public class Mrv_AutoBlue1 extends LinearOpMode {
 
 
 }
+
 
 

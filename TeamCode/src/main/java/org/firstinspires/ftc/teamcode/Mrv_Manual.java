@@ -73,6 +73,7 @@ public class Mrv_Manual extends LinearOpMode {
     private boolean changingWheelSpeed = false;
     private boolean changingLinacSpeed = false;
     private boolean changingDaWinchiSpeed = false;
+    private boolean changingWrist = false;
 
     // TODO: Fine tune the actual duck power to be able to deliver 9 ducks [Atiksh]
     public static double duck_power = 0.25;
@@ -82,10 +83,13 @@ public class Mrv_Manual extends LinearOpMode {
     public static double Wrist_Parallel_to_Linac = 0.425; // Parallel to arm
     public static double Wrist_chute_dropoff = 0.85; // Perpendicular to Arm at top
     public static double Wrist_Start_Pos = 0.0; // Perpendicular to Arm at bottom
+    public static double wrist_increment = 0.025;
+
 
     //0.52 for picking up preset
     public static double Claw_Open_Pos = 0.4;
     public static double Claw_Close_Pos = 0.0;
+    public static double Wrist_Pos;
     public static int Winch_Parallel_to_ground = 100;
     public static int Linac_Parallel_to_ground = 100;
     public static int Winch_Chute_Dropoff = 100;
@@ -268,11 +272,55 @@ public class Mrv_Manual extends LinearOpMode {
         public void mrvWrist ()
         {
             if (gamepad2.left_trigger == 1f) {
-                marvyn.Wristy.setPosition(Wrist_chute_dropoff);
+               Wrist_Pos = Wrist_chute_dropoff;
             } else {
-                marvyn.Wristy.setPosition(Wrist_Parallel_to_Linac);
+                //down
+                if (gamepad2.dpad_down) {
+                    if (!changingWrist) {
+                        timer_gp2_dpad_down.reset();
+                        changingWrist = true;
+                    } else if (timer_gp2_dpad_down.time(TimeUnit.MILLISECONDS) > BUTTON_TRIGGER_TIMER_MS) {
+                        if (Wrist_Pos <= 0.35) {
+                            Wrist_Pos = 0.35;
+                        } else {
+                            Wrist_Pos -= wrist_increment;
+                        }
+                        telemetry.addData("Wrist Pos: ", "%f", Wrist_Pos);
+                        telemetry.update();
+                        changingWrist = false;
+                    }
+                }
+                //up
+                else if (gamepad2.dpad_up) {
+                    if (!changingWrist) {
+                        timer_gp2_dpad_up.reset();
+                        changingWrist = true;
+                    } else if (timer_gp2_dpad_up.time(TimeUnit.MILLISECONDS) > BUTTON_TRIGGER_TIMER_MS) {
+                        if (Wrist_Pos >= Wrist_chute_dropoff) {
+                            Wrist_Pos = Wrist_chute_dropoff;
+                        } else {
+                            Wrist_Pos += wrist_increment;
+                        }
+                        telemetry.addData("Wrist Pos: ", "%f", Wrist_Pos);
+                        telemetry.update();
+                        changingWrist = false;
+                    }
+                }
+                //default
+                else{
+                    Wrist_Pos = Wrist_Parallel_to_Linac;
+                }
+
+
+
             }
 
+            //freerange
+
+
+            //gamepad2 dpad up
+
+            marvyn.Wristy.setPosition(Wrist_Pos);
             return;
         }
 
@@ -280,41 +328,50 @@ public class Mrv_Manual extends LinearOpMode {
         public void mrvLinAc ()
         {
 
-            //gamepad 2 dpad left -> decrease
-            if (gamepad2.dpad_left) {
-                if (!changingLinacSpeed) {
-                    timer_gp2_dpad_left.reset();
-                    changingLinacSpeed = true;
-                } else if (timer_gp2_dpad_left.time(TimeUnit.MILLISECONDS) > BUTTON_TRIGGER_TIMER_MS) {
-                    if (linacAdjust <= 1) {
-                        linacAdjust = 1;
-                    } else {
-                        linacAdjust -= 1;
-                    }
-                    telemetry.addData("linac power: ", "%f", linacAdjust);
-                    telemetry.update();
-                    changingLinacSpeed = false;
-                }
-            }
+//            //gamepad 2 dpad left -> decrease
+//            if (gamepad2.dpad_left) {
+//                if (!changingLinacSpeed) {
+//                    timer_gp2_dpad_left.reset();
+//                    changingLinacSpeed = true;
+//                } else if (timer_gp2_dpad_left.time(TimeUnit.MILLISECONDS) > BUTTON_TRIGGER_TIMER_MS) {
+//                    if (linacAdjust <= 1) {
+//                        linacAdjust = 1;
+//                    } else {
+//                        linacAdjust -= 1;
+//                    }
+//                    telemetry.addData("linac power: ", "%f", linacAdjust);
+//                    telemetry.update();
+//                    changingLinacSpeed = false;
+//                }
+//            }
+//
+//
+//            //gamepad2 dpad right -> increase speed
+//            if (gamepad2.dpad_right) {
+//                if (!changingLinacSpeed) {
+//                    timer_gp2_dpad_right.reset();
+//                    changingLinacSpeed = true;
+//                } else if (timer_gp2_dpad_right.time(TimeUnit.MILLISECONDS) > BUTTON_TRIGGER_TIMER_MS) {
+//                    if (linacAdjust >= 10) {
+//                        linacAdjust = 10;
+//                    } else {
+//                        linacAdjust += 1;
+//                    }
+//                    telemetry.addData("linac power: ", "%f", linacAdjust);
+//                    telemetry.update();
+//                    changingLinacSpeed = false;
+//                }
+//            }
 
-
-            //gamepad2 dpad right -> increase speed
-            if (gamepad2.dpad_right) {
-                if (!changingLinacSpeed) {
-                    timer_gp2_dpad_right.reset();
-                    changingLinacSpeed = true;
-                } else if (timer_gp2_dpad_right.time(TimeUnit.MILLISECONDS) > BUTTON_TRIGGER_TIMER_MS) {
-                    if (linacAdjust >= 10) {
-                        linacAdjust = 10;
-                    } else {
-                        linacAdjust += 1;
-                    }
-                    telemetry.addData("linac power: ", "%f", linacAdjust);
-                    telemetry.update();
-                    changingLinacSpeed = false;
+            if (!marvyn.Touche.getState() == true) {
+                if(-gamepad2.left_stick_y < 0){
+                    marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
+                } else {
+                    marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, -gamepad2.left_stick_y * (linacAdjust / 10));
                 }
+            } else {
+                marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, -gamepad2.left_stick_y * (linacAdjust / 10));
             }
-            marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, gamepad2.left_stick_y * (linacAdjust / 10));
         }
 
         // TODO: Add a limit switch to Da Winch - Touch sensor? [Satvika/Vishruth]
@@ -323,38 +380,38 @@ public class Mrv_Manual extends LinearOpMode {
 
            //gamepad2 dpad down -> decrease
 
-            if (gamepad2.dpad_down) {
-                if (!changingDaWinchiSpeed) {
-                    timer_gp2_dpad_down.reset();
-                    changingDaWinchiSpeed = true;
-                } else if (timer_gp2_dpad_down.time(TimeUnit.MILLISECONDS) > BUTTON_TRIGGER_TIMER_MS) {
-                    if (dawinchAdjust <= 1) {
-                        dawinchAdjust = 1;
-                    } else {
-                        dawinchAdjust -= 1;
-                    }
-                    telemetry.addData("dawinch power: ", "%f", dawinchAdjust);
-                    telemetry.update();
-                    changingDaWinchiSpeed = false;
-                }
-            }
-
-            //gamepad2 dpad up
-            if (gamepad2.dpad_up) {
-                if (!changingDaWinchiSpeed) {
-                    timer_gp2_dpad_up.reset();
-                    changingDaWinchiSpeed = true;
-                } else if (timer_gp2_dpad_up.time(TimeUnit.MILLISECONDS) > BUTTON_TRIGGER_TIMER_MS) {
-                    if (dawinchAdjust >= 10) {
-                        dawinchAdjust = 10;
-                    } else {
-                        dawinchAdjust += 1;
-                    }
-                    telemetry.addData("dawinch power: ", "%f", dawinchAdjust);
-                    telemetry.update();
-                    changingDaWinchiSpeed = false;
-                }
-            }
+//            if (gamepad2.dpad_down) {
+//                if (!changingDaWinchiSpeed) {
+//                    timer_gp2_dpad_down.reset();
+//                    changingDaWinchiSpeed = true;
+//                } else if (timer_gp2_dpad_down.time(TimeUnit.MILLISECONDS) > BUTTON_TRIGGER_TIMER_MS) {
+//                    if (dawinchAdjust <= 1) {
+//                        dawinchAdjust = 1;
+//                    } else {
+//                        dawinchAdjust -= 1;
+//                    }
+//                    telemetry.addData("dawinch power: ", "%f", dawinchAdjust);
+//                    telemetry.update();
+//                    changingDaWinchiSpeed = false;
+//                }
+//            }
+//
+//            //gamepad2 dpad up
+//            if (gamepad2.dpad_up) {
+//                if (!changingDaWinchiSpeed) {
+//                    timer_gp2_dpad_up.reset();
+//                    changingDaWinchiSpeed = true;
+//                } else if (timer_gp2_dpad_up.time(TimeUnit.MILLISECONDS) > BUTTON_TRIGGER_TIMER_MS) {
+//                    if (dawinchAdjust >= 10) {
+//                        dawinchAdjust = 10;
+//                    } else {
+//                        dawinchAdjust += 1;
+//                    }
+//                    telemetry.addData("dawinch power: ", "%f", dawinchAdjust);
+//                    telemetry.update();
+//                    changingDaWinchiSpeed = false;
+//                }
+//            }
 
             marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, gamepad2.right_stick_y * (dawinchAdjust / 10));
         }

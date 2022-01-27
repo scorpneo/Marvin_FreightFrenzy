@@ -279,12 +279,12 @@ public class Mrv_Autonomous extends LinearOpMode {
     // TODO: Autonomous Freight Drop off [Avi/Diya]
     void FreightDropOff(int level)
     {
-        int iLinacDropoffPosition = (int)(Linac_Dropoff_Revs*Linac_Ticks_Per_Rev) *-1;
+        int iLinacDropoffPosition = (int)(Linac_Dropoff_Revs*marvyn.Linac_Ticks_Per_Rev) *-1;
         int iDawinchiDropoffPosition = 0;
         switch(level)
         {
             case 0: // BOTTOM
-                iDawinchiDropoffPosition = (int) (Dawinchi_Ticks_Per_Rev * DaWinchi_Level0_Dropoff);
+                iDawinchiDropoffPosition = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level0_Dropoff);
 
                 // Set winch to 0 level
                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, STOP_AND_RESET_ENCODER);
@@ -297,7 +297,7 @@ public class Mrv_Autonomous extends LinearOpMode {
                 marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
 
                 // set Linac to drop off position
-                int iPos = -1*Linac_Ticks_Per_Rev;
+                int iPos = -1*marvyn.Linac_Ticks_Per_Rev;
                 marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, STOP_AND_RESET_ENCODER);
                 marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, RUN_WITHOUT_ENCODER);
                 marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, iPos);
@@ -322,7 +322,7 @@ public class Mrv_Autonomous extends LinearOpMode {
                 marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
                 break;
             case 1: // MIDDLE
-                iDawinchiDropoffPosition = (int) (Dawinchi_Ticks_Per_Rev * DaWinchi_Level1_Dropoff);
+                iDawinchiDropoffPosition = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level1_Dropoff);
 
                 // Set winch to 2 level
                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, STOP_AND_RESET_ENCODER);
@@ -358,10 +358,10 @@ public class Mrv_Autonomous extends LinearOpMode {
                 marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
                 break;
             case 2: // TOP
-                iDawinchiDropoffPosition = (int) (Dawinchi_Ticks_Per_Rev * DaWinchi_Level2_Dropoff);
+                iDawinchiDropoffPosition = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level2_Dropoff);
                 iDawinchiDropoffPosition = -1*iDawinchiDropoffPosition;
 
-                int iPos2 = (int)(-1.3*Linac_Ticks_Per_Rev);
+                int iPos2 = (int)(-1.3*marvyn.Linac_Ticks_Per_Rev);
                 // Set winch to 2 level
                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, STOP_AND_RESET_ENCODER);
                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, RUN_WITHOUT_ENCODER);

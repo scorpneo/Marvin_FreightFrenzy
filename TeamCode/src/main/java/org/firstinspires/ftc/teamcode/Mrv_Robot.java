@@ -31,6 +31,8 @@ package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -70,6 +72,7 @@ public class Mrv_Robot
     public Servo The_Claw = null;
     public Servo Wristy = null;
     public WebcamName eyeOfSauron = null;
+    public DigitalChannel Touche = null;
     Orientation angles;
 
     // TFOD detection
@@ -106,6 +109,9 @@ public class Mrv_Robot
     public static Pose2d blue_park_pos             = new Pose2d( 64, 36, Math.toRadians(90));
     public static Pose2d red_park_pos              = new Pose2d( 64, -36, Math.toRadians(-90));
 
+    public static int Dawinchi_Ticks_Per_Rev = 295; // From REV Robotics HD HEX 40:1
+    public static int Linac_Ticks_Per_Rev = 288; // From REV Robotics Core HEX
+
 
     /* local OpMode members. */
     HardwareMap hwMap           =  null;
@@ -140,6 +146,9 @@ public class Mrv_Robot
 
         // Acquire gyro
 
+        //get touch sensor
+        Touche = hwMap.get(DigitalChannel.class, "Touche");
+
 
         // Set all motors to zero power
         upper_left.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -160,11 +169,15 @@ public class Mrv_Robot
         lower_right.setDirection(DcMotor.Direction.FORWARD); //+ used to be
         duck_wheel.setDirection(DcMotor.Direction.FORWARD);
         another_duck_wheel.setDirection(DcMotor.Direction.REVERSE);
-        Linac.setDirection(DcMotor.Direction.FORWARD);
+        Linac.setDirection(DcMotor.Direction.REVERSE);
         Da_Winch.setDirection(DcMotor.Direction.FORWARD);
 
         mecanumDrive = new SampleMecanumDrive(hwMap);
         eyeOfSauron = hwMap.get(WebcamName.class, "Sauron");
+
+        Touche.setMode(DigitalChannel.Mode.INPUT);
+
+
     }
     String formatAngle( AngleUnit angleUnit, double angle) {
         return formatDegrees(angleUnit.DEGREES.fromUnit(angleUnit, angle));

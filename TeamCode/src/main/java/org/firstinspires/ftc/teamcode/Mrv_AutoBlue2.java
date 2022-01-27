@@ -104,15 +104,12 @@ public class Mrv_AutoBlue2 extends LinearOpMode {
 
     // Drop of Warehouse
     public static int mrvWarehouseLevel;
-    public static double DaWinchi_Level0_Dropoff = 0.7;
-    public static double DaWinchi_Level1_Dropoff = 0.15;
-    public static double DaWinchi_Level2_Dropoff = 0.55;
+    public static double DaWinchi_Level0_Dropoff = 0.5;
+    public static double DaWinchi_Level1_Dropoff = 0.10;
+    public static double DaWinchi_Level2_Dropoff = 0.45;
     public static double DaWinchi_pickup_Revs = 0.82;
-    public static int Dawinchi_Ticks_Per_Rev = 1120; // From REV Robotics HD HEX 40:1
-    public static int dropOffLevel = 0;
 
     public static double Linac_Dropoff_Revs = 1.3;
-    public static int Linac_Ticks_Per_Rev = 288; // From REV Robotics Core HEX
     public static double Linac_Pickup_Revs = 2.3;
 
     public static int mrvDawinchiCalculatedDropOffPos = 0;
@@ -270,12 +267,12 @@ public class Mrv_AutoBlue2 extends LinearOpMode {
     // TODO: Autonomous Freight Drop off [Avi/Diya]
     void FreightDropOff(int level)
     {
-        int iLinacDropoffPosition = (int)(Linac_Dropoff_Revs*Linac_Ticks_Per_Rev) *-1;
+        int iLinacDropoffPosition = (int)(Linac_Dropoff_Revs*marvyn.Linac_Ticks_Per_Rev) *-1;
         int iDawinchiDropoffPosition = 0;
         switch(level)
         {
             case 0: // BOTTOM
-                iDawinchiDropoffPosition = (int) (Dawinchi_Ticks_Per_Rev * DaWinchi_Level0_Dropoff);
+                iDawinchiDropoffPosition = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level0_Dropoff);
 
                 // Set winch to 0 level
                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, STOP_AND_RESET_ENCODER);
@@ -288,7 +285,7 @@ public class Mrv_AutoBlue2 extends LinearOpMode {
                 marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
 
                 // set Linac to drop off position
-                int iPos = -1*Linac_Ticks_Per_Rev;
+                int iPos = -1*marvyn.Linac_Ticks_Per_Rev;
                 marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, STOP_AND_RESET_ENCODER);
                 marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, RUN_WITHOUT_ENCODER);
                 marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, iPos);
@@ -301,7 +298,7 @@ public class Mrv_AutoBlue2 extends LinearOpMode {
 
                 break;
             case 1: // MIDDLE
-                iDawinchiDropoffPosition = (int) (Dawinchi_Ticks_Per_Rev * DaWinchi_Level1_Dropoff);
+                iDawinchiDropoffPosition = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level1_Dropoff);
 
                 // Set winch to 2 level
                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, STOP_AND_RESET_ENCODER);
@@ -324,10 +321,10 @@ public class Mrv_AutoBlue2 extends LinearOpMode {
                 marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
                 break;
             case 2: // TOP
-                iDawinchiDropoffPosition = (int) (Dawinchi_Ticks_Per_Rev * DaWinchi_Level2_Dropoff);
+                iDawinchiDropoffPosition = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level2_Dropoff);
                 iDawinchiDropoffPosition = -1*iDawinchiDropoffPosition;
 
-                int iPos2 = (int)(-1.3*Linac_Ticks_Per_Rev);
+                int iPos2 = (int)(-1.3*marvyn.Linac_Ticks_Per_Rev);
                 // Set winch to 2 level
                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, STOP_AND_RESET_ENCODER);
                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, RUN_WITHOUT_ENCODER);
@@ -356,18 +353,18 @@ public class Mrv_AutoBlue2 extends LinearOpMode {
         switch(level)
         {
             case 0: // BOTTOM
-                mrvDawinchiCalculatedDropOffPos = (int) (Dawinchi_Ticks_Per_Rev * DaWinchi_Level0_Dropoff);
-                mrvLinacCalcualtedDropOffPos = -1*Linac_Ticks_Per_Rev;
+                mrvDawinchiCalculatedDropOffPos = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level0_Dropoff);
+                mrvLinacCalcualtedDropOffPos = -1*marvyn.Linac_Ticks_Per_Rev;
 
                 break;
             case 1: // MIDDLE
-                mrvDawinchiCalculatedDropOffPos = (int) (Dawinchi_Ticks_Per_Rev * DaWinchi_Level1_Dropoff);
-                mrvLinacCalcualtedDropOffPos = -(int)(Linac_Dropoff_Revs*Linac_Ticks_Per_Rev) *-1;
+                mrvDawinchiCalculatedDropOffPos = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level1_Dropoff);
+                mrvLinacCalcualtedDropOffPos = -(int)(Linac_Dropoff_Revs*marvyn.Linac_Ticks_Per_Rev) *-1;
 
                 break;
             case 2: // TOP
-                mrvDawinchiCalculatedDropOffPos = (int) (Dawinchi_Ticks_Per_Rev * DaWinchi_Level2_Dropoff * -1);
-                mrvLinacCalcualtedDropOffPos = -(int)(Linac_Dropoff_Revs*Linac_Ticks_Per_Rev) *-1;
+                mrvDawinchiCalculatedDropOffPos = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level2_Dropoff * -1);
+                mrvLinacCalcualtedDropOffPos = -(int)(Linac_Dropoff_Revs*marvyn.Linac_Ticks_Per_Rev) *-1;
 
                 break;
         }
@@ -413,7 +410,7 @@ public class Mrv_AutoBlue2 extends LinearOpMode {
         marvyn.The_Claw.setPosition(Claw_Open_Pos);
         marvyn.Wristy.setPosition(Wrist_Parallel_to_ground);
 
-        int iLinacPickupPos = (int)(Linac_Pickup_Revs * Linac_Ticks_Per_Rev);
+        int iLinacPickupPos = (int)(Linac_Pickup_Revs * marvyn.Linac_Ticks_Per_Rev);
         marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, STOP_AND_RESET_ENCODER);
         marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, RUN_WITHOUT_ENCODER);
         marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, iLinacPickupPos);
@@ -427,7 +424,7 @@ public class Mrv_AutoBlue2 extends LinearOpMode {
         marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
         mrvTelemetry.addData("Time to extend LINAC", timeprofiler.time());
 
-        int iDawinchiDropoffPosition = (int) (Dawinchi_Ticks_Per_Rev * DaWinchi_pickup_Revs);
+        int iDawinchiDropoffPosition = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_pickup_Revs);
 
         // Set winch to 0 level
         marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, STOP_AND_RESET_ENCODER);
