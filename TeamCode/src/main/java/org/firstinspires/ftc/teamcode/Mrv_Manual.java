@@ -273,52 +273,39 @@ public class Mrv_Manual extends LinearOpMode {
         {
             if (gamepad2.left_trigger == 1f) {
                Wrist_Pos = Wrist_chute_dropoff;
-            } else {
-                //down
-                if (gamepad2.dpad_down) {
-                    if (!changingWrist) {
-                        timer_gp2_dpad_down.reset();
-                        changingWrist = true;
-                    } else if (timer_gp2_dpad_down.time(TimeUnit.MILLISECONDS) > BUTTON_TRIGGER_TIMER_MS) {
-                        if (Wrist_Pos <= 0.35) {
-                            Wrist_Pos = 0.35;
-                        } else {
-                            Wrist_Pos -= wrist_increment;
-                        }
-                        telemetry.addData("Wrist Pos: ", "%f", Wrist_Pos);
-                        telemetry.update();
-                        changingWrist = false;
+            } else  if (gamepad2.dpad_down) {
+                if (!changingWrist) {
+                    timer_gp2_dpad_down.reset();
+                    changingWrist = true;
+                } else if (timer_gp2_dpad_down.time(TimeUnit.MILLISECONDS) > BUTTON_TRIGGER_TIMER_MS) {
+                    if (Wrist_Pos <= 0.35) {
+                        Wrist_Pos = 0.35;
+                    } else {
+                        Wrist_Pos -= wrist_increment;
                     }
+                    telemetry.addData("Wrist Pos: ", "%f", Wrist_Pos);
+                    telemetry.update();
+                    changingWrist = false;
                 }
-                //up
-                else if (gamepad2.dpad_up) {
-                    if (!changingWrist) {
-                        timer_gp2_dpad_up.reset();
-                        changingWrist = true;
-                    } else if (timer_gp2_dpad_up.time(TimeUnit.MILLISECONDS) > BUTTON_TRIGGER_TIMER_MS) {
-                        if (Wrist_Pos >= Wrist_chute_dropoff) {
-                            Wrist_Pos = Wrist_chute_dropoff;
-                        } else {
-                            Wrist_Pos += wrist_increment;
-                        }
-                        telemetry.addData("Wrist Pos: ", "%f", Wrist_Pos);
-                        telemetry.update();
-                        changingWrist = false;
+            } else  if (gamepad2.dpad_up) {
+                if (!changingWrist) {
+                    timer_gp2_dpad_up.reset();
+                    changingWrist = true;
+                } else if (timer_gp2_dpad_up.time(TimeUnit.MILLISECONDS) > BUTTON_TRIGGER_TIMER_MS) {
+                    if (Wrist_Pos >= Wrist_chute_dropoff) {
+                        Wrist_Pos = Wrist_chute_dropoff;
+                    } else {
+                        Wrist_Pos += wrist_increment;
                     }
+                    telemetry.addData("Wrist Pos: ", "%f", Wrist_Pos);
+                    telemetry.update();
+                    changingWrist = false;
                 }
-                //default
-                else{
-                    Wrist_Pos = Wrist_Parallel_to_Linac;
-                }
-
-
-
             }
-
-            //freerange
-
-
-            //gamepad2 dpad up
+            //default
+            else{
+                Wrist_Pos = Wrist_Parallel_to_Linac;
+            }
 
             marvyn.Wristy.setPosition(Wrist_Pos);
             return;
