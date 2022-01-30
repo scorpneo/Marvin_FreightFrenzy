@@ -30,6 +30,8 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.CRServoImplEx;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
@@ -43,6 +45,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 
 import java.util.Locale;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 
 public class Mrv_Robot
@@ -60,6 +64,16 @@ public class Mrv_Robot
         ALL_ATTACHMENTS,
         ALL
     }
+
+    enum MrvServos
+    {
+        LEFT_CLAW,
+        RIGHT_CLAW,
+        WRISTY,
+        CHUTEY,
+        ALL
+    }
+
     /* Public OpMode members. */
     public DcMotor upper_right = null;
     public DcMotor upper_left = null;
@@ -69,11 +83,20 @@ public class Mrv_Robot
     public DcMotor another_duck_wheel = null;
     public DcMotor Linac = null;
     public DcMotor Da_Winch = null;
-    public Servo The_Claw = null;
+    //public Servo The_Claw = null;
+    public CRServo Claw_Left = null;
+    public CRServo Claw_Right = null;
     public Servo Wristy = null;
     public WebcamName eyeOfSauron = null;
     public DigitalChannel Touche = null;
     Orientation angles;
+
+    public static int stallDetectionThreshold = 500;
+    public static ElapsedTime leftClawTimer  = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
+    public static ElapsedTime rightClawTimer = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS);
+    public static double leftClawLastPos = 0.0f;
+    public static double rightClawLastPos = 0.0f;
+
 
     // TFOD detection
     public static double FirstPosMax = 250;
@@ -140,7 +163,9 @@ public class Mrv_Robot
 
 
         //Servo
-        The_Claw = hwMap.get(Servo.class, "The_Clawww");
+        //  The_Claw = hwMap.get(Servo.class, "The_Clawww");
+        Claw_Left = hwMap.get(CRServo.class, "Left_Claw");
+        Claw_Right = hwMap.get(CRServo.class, "Right_Claw");
         Wristy = hwMap.get(Servo.class, "Wristy");
 
 
@@ -171,12 +196,14 @@ public class Mrv_Robot
         another_duck_wheel.setDirection(DcMotor.Direction.REVERSE);
         Linac.setDirection(DcMotor.Direction.REVERSE);
         Da_Winch.setDirection(DcMotor.Direction.FORWARD);
+        Claw_Left.setDirection(CRServo.Direction.REVERSE);
+        Claw_Right.setDirection(CRServo.Direction.FORWARD);
+
 
         mecanumDrive = new SampleMecanumDrive(hwMap);
         eyeOfSauron = hwMap.get(WebcamName.class, "Sauron");
 
         Touche.setMode(DigitalChannel.Mode.INPUT);
-
 
     }
     String formatAngle( AngleUnit angleUnit, double angle) {
@@ -186,6 +213,55 @@ public class Mrv_Robot
     String formatDegrees(double degrees) {
         return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
     }
+
+//    public boolean killPowerIfStalled(MrvServos eWhichServo)
+//    {
+//        switch( eWhichServo ) {
+//            case LEFT_CLAW:
+//                if(Claw_Left.getPower() !=0f)
+//                    break;
+//                double currentPos = Claw_Left.getController().getServoPosition(0);
+//                if(leftClawLastPos == 0f)
+//                    leftClawLastPos = currentPos;
+//
+//                if(  leftClawLastPos != 0f &&
+//                     ( (leftClawLastPos-currentPos) != 0f ) &&
+//                     ( (leftClawTimer.time() > stallDetectionThreshold ) ) )
+//                {
+//                    Claw_Left.setPower(0f);
+//                    leftClawTimer.reset();
+//                }
+//                else {
+//                    leftClawTimer.reset();
+//                    leftClawTimer.startTime();
+//                    leftClawLastPos = 0f;
+//                }
+//                break;
+//            case RIGHT_CLAW:
+//                if(Claw_Right.getPower() !=0f)
+//                    break;
+//                double currentPos = Claw_Right.getController().getServoPosition(0);
+//                if(rightClawLastPos == 0f)
+//                    rightClawLastPos = currentPos;
+//
+//                if(  rightClawLastPos != 0f &&
+//                        ( (rightClawLastPos-currentPos) != 0f ) &&
+//                        ( (rightClawTimer.time() > stallDetectionThreshold ) ) )
+//                {
+//                    Claw_Right.setPower(0f);
+//                    rightClawTimer.reset();
+//                }
+//                else {
+//                    rightClawTimer.reset();
+//                    rightClawTimer.startTime();
+//                    rightClawLastPos = 0f;
+//                }
+//                break;
+//            default:
+//                break;
+//        }
+//        return false;
+//    }
 
 
     public void setRunMode(MrvMotors eWhichMotor, DcMotor.RunMode eMode )

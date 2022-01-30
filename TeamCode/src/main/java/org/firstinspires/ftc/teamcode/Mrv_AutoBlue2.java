@@ -29,7 +29,7 @@ import static com.qualcomm.robotcore.util.ElapsedTime.Resolution.MILLISECONDS;
 
 
 @Config
-@Autonomous(group = "drive")
+@Autonomous(group = "Autonomous")
 public class Mrv_AutoBlue2 extends LinearOpMode {
 
     enum MrvAllianceField
@@ -39,15 +39,6 @@ public class Mrv_AutoBlue2 extends LinearOpMode {
     }
 
     Mrv_Robot marvyn = new Mrv_Robot();
-
-//    private static final String[] TFOD_MODEL_LABELS =
-//            {
-//                    "Ball",
-//                    "Cube",
-//                    "Duck",
-//                    "Marker",
-//                    "Aztechs_TSE"
-//            };
 
     private static final String[] TFOD_MODEL_LABELS =
             {
@@ -264,7 +255,6 @@ public class Mrv_AutoBlue2 extends LinearOpMode {
         return PyraPos;
     }
 
-    // TODO: Autonomous Freight Drop off [Avi/Diya]
     void FreightDropOff(int level)
     {
         int iLinacDropoffPosition = (int)(Linac_Dropoff_Revs*marvyn.Linac_Ticks_Per_Rev) *-1;
@@ -348,29 +338,6 @@ public class Mrv_AutoBlue2 extends LinearOpMode {
         }
     }
 
-    void CalculateWarehouseDropOffPos(int level)
-    {
-        switch(level)
-        {
-            case 0: // BOTTOM
-                mrvDawinchiCalculatedDropOffPos = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level0_Dropoff);
-                mrvLinacCalcualtedDropOffPos = -1*marvyn.Linac_Ticks_Per_Rev;
-
-                break;
-            case 1: // MIDDLE
-                mrvDawinchiCalculatedDropOffPos = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level1_Dropoff);
-                mrvLinacCalcualtedDropOffPos = -(int)(Linac_Dropoff_Revs*marvyn.Linac_Ticks_Per_Rev) *-1;
-
-                break;
-            case 2: // TOP
-                mrvDawinchiCalculatedDropOffPos = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level2_Dropoff * -1);
-                mrvLinacCalcualtedDropOffPos = -(int)(Linac_Dropoff_Revs*marvyn.Linac_Ticks_Per_Rev) *-1;
-
-                break;
-        }
-    }
-
-
     void buildTrajectories()
     {
 
@@ -403,81 +370,6 @@ public class Mrv_AutoBlue2 extends LinearOpMode {
         return;
     }
 
-    // TODO: Autonomous Freight Pickup [Lavanya]
-    void FreightPickUp()
-    {
-
-        marvyn.The_Claw.setPosition(Claw_Open_Pos);
-        marvyn.Wristy.setPosition(Wrist_Parallel_to_ground);
-
-        int iLinacPickupPos = (int)(Linac_Pickup_Revs * marvyn.Linac_Ticks_Per_Rev);
-        marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, STOP_AND_RESET_ENCODER);
-        marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, RUN_WITHOUT_ENCODER);
-        marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, iLinacPickupPos);
-        ElapsedTime timeprofiler = new ElapsedTime(MILLISECONDS);
-        timeprofiler.reset();
-        timeprofiler.startTime();
-        marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 1);
-        while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.LIN_AC) < iLinacPickupPos) {
-            idle();
-        }
-        marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
-        mrvTelemetry.addData("Time to extend LINAC", timeprofiler.time());
-
-        int iDawinchiDropoffPosition = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_pickup_Revs);
-
-        // Set winch to 0 level
-        marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, STOP_AND_RESET_ENCODER);
-        marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, RUN_WITHOUT_ENCODER);
-        marvyn.setTargetPosition(Mrv_Robot.MrvMotors.DA_WINCHI, iDawinchiDropoffPosition);
-        timeprofiler.reset();
-        timeprofiler.startTime();
-        marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 1);
-        while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI) < iDawinchiDropoffPosition) {
-            idle();
-        }
-        marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
-        mrvTelemetry.addData("Time to drop WINCH", timeprofiler.time());
-
-        sleep(500);
-        marvyn.The_Claw.setPosition(Claw_Close_Pos);
-        sleep(1000);
-
-        // Set winch to 0 level
-        marvyn.setTargetPosition(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
-        timeprofiler.reset();
-        timeprofiler.startTime();
-        marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, -1);
-        while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI) > 0) {
-            idle();
-        }
-        marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
-        mrvTelemetry.addData("Time to raise WINCH", timeprofiler.time());
-
-        marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, RUN_WITHOUT_ENCODER);
-        marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, 0);
-        timeprofiler.reset();
-        timeprofiler.startTime();
-        marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, -1);
-        while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.LIN_AC) > 0) {
-            idle();
-        }
-        marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
-        mrvTelemetry.addData("Time to retract LINAC", timeprofiler.time());
-        mrvTelemetry.update();
-
-        sleep(4000);
-    }
-
-    // TODO: Autonomous Spin Duck Wheel [Avi/Diya]
-    void SpinDuckWheel()
-    {
-        sleep(1000);
-        marvyn.setPower(Mrv_Robot.MrvMotors.DUCK_WHEELS, 0.25*-1);
-        sleep(2500);
-        marvyn.setPower(Mrv_Robot.MrvMotors.DUCK_WHEELS, 0);
-        return;
-    }
 
     private double getBatteryVoltage() {
         double result = Double.POSITIVE_INFINITY;

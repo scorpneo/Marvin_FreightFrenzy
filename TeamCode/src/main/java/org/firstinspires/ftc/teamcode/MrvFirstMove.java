@@ -146,8 +146,6 @@ public class MrvFirstMove extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
 
-        // TODO: Roadrunner tuning [Atiksh/Anshul]
-        // TODO: Update drive constants based on new parameters [Atiksh/Anshul]
 
         // init Mecanum Drive
         marvyn.init(hardwareMap);
@@ -277,7 +275,6 @@ public class MrvFirstMove extends LinearOpMode {
             marvyn.mecanumDrive.trajectorySequenceBuilder(new Pose2d(-32, 60, Math.toRadians(90)))
                     //drive to hub
                     .lineToLinearHeading(new Pose2d(-12, -48, Math.toRadians(90)))
-                    //TODO: set exact end pose for duck spline
                     .splineTo(new Vector2d(-48,-56),Math.toRadians(-135))
                     //do duck
                     .waitSeconds(3)
@@ -401,7 +398,6 @@ public class MrvFirstMove extends LinearOpMode {
         return bTargetVisible;
     }
 
-    // TODO: Autonmous MrvGetWarehouseLevel [Lavanya]
     int MrvGetWarehouseLevel(MrvAllianceFieldPos fieldPos)
     {
         if(mrvTfod != null && opModeIsActive())
@@ -485,23 +481,6 @@ public class MrvFirstMove extends LinearOpMode {
         return 0;
     }
 
-    // TODO: Autonomous Freight Drop off [Avi/Diya]
-    void FreightDropOff(int level)
-    {
-
-
-    }
-
-    // TODO: Autonomous Freight Pickup [Lavanya]
-    void FreightPickUp()
-    {
-
-    }
-
-    // TODO: Autonomous Spin Duck Wheel [Avi/Diya]
-    void SpinDuckWheel()
-    {
-    }
 
     /*
      * Identify a target by naming it, and setting its position and orientation on the field

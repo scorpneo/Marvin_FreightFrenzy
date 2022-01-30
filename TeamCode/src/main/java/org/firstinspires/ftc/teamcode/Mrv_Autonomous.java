@@ -11,8 +11,10 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
@@ -25,6 +27,7 @@ import java.util.List;
 
 import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_WITHOUT_ENCODER;
 import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.STOP_AND_RESET_ENCODER;
+import static com.qualcomm.robotcore.util.ElapsedTime.Resolution.MILLISECONDS;
 
 /*
  * This is an example of a more complex path to really test the tuning.
@@ -32,8 +35,7 @@ import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.STOP_AND_RESET_ENC
 
 
 @Config
-@Autonomous(group = "drive")
-@Disabled
+@Autonomous(group = "Autonomous")
 public class Mrv_Autonomous extends LinearOpMode {
 
     enum MrvAllianceField
@@ -46,29 +48,24 @@ public class Mrv_Autonomous extends LinearOpMode {
 
     private static final String[] TFOD_MODEL_LABELS =
             {
-                    "Ball",
-                    "Cube",
-                    "Duck",
-                    "Marker",
                     "Aztechs_TSE"
             };
-
-//    private static final String[] TFOD_MODEL_LABELS =
-//            {
-//                    "Aztechs_TSE"
-//            };
 
     private static FtcDashboard mrvDashboard;
     private static VuforiaLocalizer mrvVuforia;
     private static TFObjectDetector mrvTfod;
-    private static MultipleTelemetry mrvTelemetry;
+    private static Telemetry mrvDashboardTelemetry;
     private static TelemetryPacket mrvDashboardTelemetryPacket = new TelemetryPacket();
     private static int iTeleCt = 1;
 
+    // Tensorflow camera settings
+    private static int TFodResolution = 320;
+    private static double TFodZoomFactor = 1;
+
     // VUFORIA Key
     public static final String VUFORIA_LICENSE_KEY = "AZRnab7/////AAABmTUhzFGJLEyEnSXEYWthkjhGRzu8klNOmOa9WEHaryl9AZCo2bZwq/rtvx83YRIgV60/Jy/2aivoXaHNzwi7dEMGoaglSVmdmzPF/zOPyiz27dDJgLVvIROD8ww7lYzL8eweJ+5PqLAavvX3wgrahkOxxOCNeKG9Tl0LkbS5R11ATXL7LLWeUv5FP1aDNgMZvb8P/u96OdOvD6D40Nf01Xf+KnkF5EXwNQKk1r7qd/hiv9h80gvBXMFqMkVgUyogwEnlK2BfmeUhGVm/99BiwwW65LpKSaLVPpW/6xqz9SyPgZ/L/vshbWgSkTB/KoERiV8MsW79RPUuQS6NTOLY32I/kukmsis3MFst5LP/d3gx";
-    private static final String TFOD_MODEL_ASSET = "FreightFrenzy_BCDM.tflite";
-//    private static final String TFOD_MODEL_ASSET = "FreightFrenzy_Aztechs.tflite";
+    private static final String TFOD_MODEL_ASSET = "FreightFrenzy_AztechsTSE1.tflite";
+
     // Field Dimensions
     private static final float mmPerInch        = 25.4f;
     private static final float mmTargetHeight   = 6 * mmPerInch;          // the height of the center of the target image above the floor
@@ -81,87 +78,91 @@ public class Mrv_Autonomous extends LinearOpMode {
     public TrajectorySequence mrvRed2;
     public TrajectorySequence mrvBlue1;
     public TrajectorySequence mrvBlue2;
+    public TrajectorySequence mrvBluePickupTraj;
+    public TrajectorySequence mrvBlueDropoffTraj;
 
-//    public static double starting_pos_x = 12;
+    // Warehouse drop off level
+    private static int mrvWarehouseLevel;
+
+
+    // TODO: Trajectory positions: Fine tune and move to Mrv_Robot
+    Pose2d blue_1_pose_estimate      = new Pose2d(-33.75, 62.625, Math.toRadians(-90));
+    Pose2d red_1_pose_estimate       = new Pose2d(-37, -62.625, Math.toRadians(90));
+
+    Pose2d blue_2_pose_estimate      = new Pose2d( 13, 62.625, Math.toRadians(-90));
+    Pose2d red_2_pose_estimate       = new Pose2d( 9.75, -62.625, Math.toRadians(90));
+
+    Pose2d blue_1_shipping_hub_pos = new Pose2d(-21.5,  45.75, Math.toRadians(-70));
+    Pose2d red1_shipping_hub_pos      = new Pose2d(-21.5, -45.75, Math.toRadians(70));
+
+    Pose2d blue_2_shipping_hub_pos     = new Pose2d(-8.625,  45.75, Math.toRadians(-90));
+    Pose2d red2_shipping_hub_pos      = new Pose2d(-1.625, -45.75, Math.toRadians(110));
+
+    Pose2d blue_duck_wheel_pos       = new Pose2d(-59.75, 55, Math.toRadians(0));
+    Pose2d red_duck_wheel_pos        = new Pose2d(-59.75, -55, Math.toRadians(0));
+
+    Pose2d blue_warehouse_enter_pos  = new Pose2d( 11, 64.75, Math.toRadians(0));
+    Pose2d red_warehouse_enter_pos   = new Pose2d( 11, -64.75, Math.toRadians(0));
+
+    Pose2d blue_warehouse_pos        = new Pose2d( 40.75, 64.75, Math.toRadians(0 ));
+    Pose2d red_warehouse_pos         = new Pose2d( 36.75, -64.75, Math.toRadians(0));
+
+    Pose2d blue_storage_pos          = new Pose2d( -59.75, 35.5, Math.toRadians(0));
+    Pose2d red_storage_pos          = new Pose2d( -59.75, -35.5, Math.toRadians(0));
+
+    Pose2d blue_park_pos             = new Pose2d( 40, 36, Math.toRadians(45));
+    Pose2d red_park_pos              = new Pose2d( 64, -36, Math.toRadians(-90));
+
 
     // Dashboard config variables
-
-    // Claw position
-    public static double Claw_Open_Pos = 0.4;
-    public static double Claw_Close_Pos = 0.0;
-
-    // Wrist position
+    // TODO: Wrist Positions: Fine tune and move to Mrv_Robot
     public static double Wrist_Parallel_to_Linac = 0.425; // Parallel to arm
+    public static double Wrist_Parallel_to_ground = 0.52; // Parallel to ground for pickup
     public static double Wrist_chute_dropoff = 0.85; // Perpendicular to Arm at top
     public static double Wrist_Start_Pos = 0.0; // Perpendicular to Arm at bottom
 
-
-    // Tensor flow - Warehouse level detection
-    public static int TFodResolution = 320;
-    public static double TFodZoomFactor = 1;
-    public static int sleepyTime = 5000;
-    public static double FirstPosLeftMin = -5;
-    public static double FirstPosLeftMax = 115;
-    public static double FirstPosRightMin = 60;
-    public static double FirstPosRightMax = 230;
-    public static double SecPosLeftMin = 315;
-    public static double SecPosLeftMax = 530;
-    public static double SecPosRightMin = 420;
-    public static double SecPosRightMax = 640;
-
-    // Trajectory sequencing
-    public static Pose2d red_1_pose_estimate       = new Pose2d(-36, -64, Math.toRadians(90));
-    public static Pose2d red_2_pose_estimate       = new Pose2d( 12, -64, Math.toRadians(90));
-    public static Pose2d blue_2_pose_estimate      = new Pose2d(-36, 64, Math.toRadians(90));
-    public static Pose2d red_shipping_hub_pos      = new Pose2d(-12, -48, Math.toRadians(40));
-    public static Pose2d red_duck_wheel_pos        = new Pose2d(  0, -48, Math.toRadians(130));
-    public static Pose2d red_warehouse_enter_pos   = new Pose2d( 24, -64, Math.toRadians(0));
-    public static Pose2d red_warehouse_pos         = new Pose2d( 40, -64, Math.toRadians(0));
-    public static Pose2d red_park_pos              = new Pose2d( 64, -36, Math.toRadians(90));
-
-    public static Pose2d blue_1_pose_estimate      = new Pose2d( -36, 64, Math.toRadians(-90));
-
-    public static Pose2d blue_shipping_hub_pos     = new Pose2d(-12,  48, Math.toRadians(-90));
-    public static Pose2d blue_duck_wheel_pos       = new Pose2d(-61, 56, Math.toRadians(-35));
-    public static Pose2d blue_warehouse_enter_pos  = new Pose2d( 24, 64, Math.toRadians(0));
-    public static Pose2d blue_warehouse_pos        = new Pose2d( 40, 64, Math.toRadians(0 ));
-    public static Pose2d blue_park_pos             = new Pose2d( 64, 36, Math.toRadians(90));
-
+    // Speed control variables
     public static double slower_speed = 25;
     public static double slower_accel = 25;
 
     // Drop of Warehouse
-    public static int mrvWarehouseLevel;
-    public static double DaWinchi_Level0_Dropoff = 0.7;
-    public static double DaWinchi_Level1_Dropoff = 0.15;
-    public static double DaWinchi_Level2_Dropoff = 0.55;
-    public static int Dawinchi_Ticks_Per_Rev = 1120; // From REV Robotics HD HEX 40:1
-    public static int dropOffLevel = 0;
+	// TODO: DaWinchi positions: Fine tune and move to Mrv_Robot
+    public static int overrideWarehouseDropoffLevel = 0;
 
-    public static double Linac_Dropoff_Revs = 1.2;
-    public static int Linac_Ticks_Per_Rev = 288; // From REV Robotics Core HEX
+    public static double DaWinchi_Level0_Dropoff = 0.5;
+    public static double DaWinchi_Level1_Dropoff = 0.10;
+    public static double DaWinchi_Level2_Dropoff = 0.45;
+    public static double DaWinchi_pickup_Revs = 0.82;
+    public static double DaWinchi_Power = 1.0;
+    public static int mrvDawinchiCalculatedDropOffPos = 0;
+    public static int mrvLinacCalcualtedDropOffPos = 0;
 
-    // Goal 1: Drop off freight on all 3 levels
-    // Goal 2: Duck wheel spin
-    // Goal 3: Recognize TSE for correct level
-    // Goal 4: Trajectory for Blue 1
-    // Goal 5: Individual programs for each of the other positions
+    // TODO: LinAc Positions: Fine tune and move to Mrv_Robot
+    public static double Linac_Dropoff_Revs = 1.3;
+    public static double Linac_Pickup_Revs = 2.3;
+
 
     @Override
     public void runOpMode() throws InterruptedException {
-         marvyn.init(hardwareMap);
+
+        marvyn.init(hardwareMap);
+
+        iTeleCt = 1;
+
+        telemetry.clearAll();
+        telemetry.update();
+        telemetry.setAutoClear(false);
 
         // init Dashboard
         mrvDashboard = FtcDashboard.getInstance();
-        mrvTelemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry() );
-        mrvTelemetry.clearAll();
-        mrvTelemetry.update();
-        mrvTelemetry.setAutoClear(false);
-        FtcDashboard.getInstance().getTelemetry().setAutoClear(false);
+        mrvDashboardTelemetryPacket = new TelemetryPacket();
 
-        mrvTelemetry.addLine(String.format("%d. Marvin Initialized!", iTeleCt++));
+        telemetry.addLine(String.format("%d. Marvin Initialized!", iTeleCt++));
+        mrvDashboardTelemetryPacket.addLine(String.format("%d. Marvin Initialized!", iTeleCt++));
+
         double volts = getBatteryVoltage();
-        mrvTelemetry.addData(String.format("%d. Battery voltage", iTeleCt++),  String.format("%.1f volts",volts) );
+        telemetry.addLine(String.format("%d. Battery voltage: %.1f volts", iTeleCt++, volts) );
+        mrvDashboardTelemetryPacket.addLine(String.format("%d. Battery voltage: %.1f volts", iTeleCt++, volts) );
 
         // init VUFORIA
         VuforiaLocalizer.Parameters vuParams = new VuforiaLocalizer.Parameters(R.id.cameraMonitorViewId);
@@ -182,38 +183,55 @@ public class Mrv_Autonomous extends LinearOpMode {
         mrvTfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, mrvVuforia);
         mrvTfod.loadModelFromAsset(TFOD_MODEL_ASSET, TFOD_MODEL_LABELS);
 
-        mrvTelemetry.addLine(String.format("%d. Tensorflow assets loaded", iTeleCt++));
-        mrvTelemetry.update();
-        FtcDashboard.getInstance().sendTelemetryPacket(mrvDashboardTelemetryPacket);
-
-        // Set the claw to hold the preloaded element
-        marvyn.The_Claw.setPosition(Claw_Close_Pos);
-        sleep(2000);
-        marvyn.Wristy.setPosition(Wrist_Parallel_to_Linac);
+        telemetry.addLine(String.format("%d. Tensorflow assets loaded", iTeleCt++));
+        mrvDashboardTelemetryPacket.addLine(String.format("%d. Tensorflow assets loaded", iTeleCt++));
 
         // Startup camera
         mrvDashboard.startCameraStream(mrvTfod, 0); // start streaming camera
-        mrvTelemetry.addLine(String.format("%d. TFod Camera Stream started", iTeleCt++));
-        mrvTelemetry.update();
+        telemetry.addLine(String.format("%d. TFod Camera Stream started", iTeleCt++));
+        mrvDashboardTelemetryPacket.addLine(String.format("%d. TFod Camera Stream started", iTeleCt++));
 
         if (mrvTfod != null) {
             mrvTfod.activate();
             mrvTfod.setZoom(TFodZoomFactor, 16.0 / 9.0);
         }
-        sleep(2000);
-        mrvTelemetry.addLine("Tfod activated! Ready to Start!");
-        mrvTelemetry.update();
+        sleep(1000);
+        telemetry.addLine(String.format("%d. Tfod activated! Ready to Start!", iTeleCt++));
+        mrvDashboardTelemetryPacket.addLine(String.format("%d. Tfod activated! Ready to Start!", iTeleCt++));
+
+        telemetry.update();
+        mrvDashboard.sendTelemetryPacket(mrvDashboardTelemetryPacket);
 
         waitForStart();
+        mrvDashboardTelemetryPacket.clearLines();
 
+        marvyn.Wristy.setPosition(Wrist_Parallel_to_Linac);
         mrvWarehouseLevel = MrvGetWarehouseLevel(MrvAllianceField.BLUE);
-        mrvTelemetry.addData("Warehouse Level", mrvWarehouseLevel);
-        mrvTelemetry.update();
 
-        buildTrajectories();
+        telemetry.addLine(String.format("%d. Detected Warehouse Level: %d", iTeleCt++, mrvWarehouseLevel));
+        mrvDashboardTelemetryPacket.addLine(String.format("%d. Detected Warehouse Level: %d", iTeleCt++, mrvWarehouseLevel));
+        telemetry.update();
 
-        marvyn.mecanumDrive.setPoseEstimate(blue_1_pose_estimate);
-        marvyn.mecanumDrive.followTrajectorySequence(mrvBlue1);
+        //buildTrajectories();
+        figureSkating();
+
+        Pose2d startPose = blue_2_pose_estimate;
+        marvyn.mecanumDrive.setPoseEstimate(startPose);
+
+        telemetry.addLine(String.format("%d. Initial Pose Estimate: (x: %.3f, y: %.3f, Heading: %.3f)", iTeleCt++, startPose.getX(), startPose.getY(), startPose.getHeading() ));
+        mrvDashboardTelemetryPacket.addLine(String.format("%d. Initial Pose Estimate: (x: %.3f, y: %.3f, Heading: %.3f)", iTeleCt++, startPose.getX(), startPose.getY(), startPose.getHeading() ));
+
+        ElapsedTime trajectoryTimer = new ElapsedTime(MILLISECONDS);
+        trajectoryTimer.reset();
+        trajectoryTimer.startTime();
+        marvyn.mecanumDrive.followTrajectorySequence(mrvBlue2);
+
+        telemetry.addLine(String.format("%d. Total trajectoryTimer to complete Trajectory Sequence: %.3f ", iTeleCt++, trajectoryTimer.time()));
+        mrvDashboardTelemetryPacket.addLine(String.format("%d. Total trajectoryTimer to complete Trajectory Sequence: %.3f ", iTeleCt++, trajectoryTimer.time()));
+
+        telemetry.update();
+        mrvDashboard.sendTelemetryPacket(mrvDashboardTelemetryPacket);
+
 
     }
 
@@ -227,11 +245,11 @@ public class Mrv_Autonomous extends LinearOpMode {
             float top    = 0.0f;
             float bottom = 0.0f;
             float right  = 0.0f;
-
+            float mdpt = 0.0f;
             List<Recognition> updatedRecognition = mrvTfod.getUpdatedRecognitions();
             if(updatedRecognition != null) {
-                mrvTelemetry.addData("# Objects detected: ", updatedRecognition.size());
-                mrvDashboardTelemetryPacket.put("# Objects detected: ", updatedRecognition.size());
+                telemetry.addLine( String.format("%d. # Objects detected: %d", iTeleCt++, updatedRecognition.size()));
+                mrvDashboardTelemetryPacket.addLine( String.format("%d. # Objects detected: %d", iTeleCt++, updatedRecognition.size()));
                 int i = 0;
                 for(Recognition recognition : updatedRecognition)
                 {
@@ -239,25 +257,30 @@ public class Mrv_Autonomous extends LinearOpMode {
                     right = recognition.getRight();
                     top = recognition.getTop();
                     bottom = recognition.getBottom();
-                    if (recognition.getLabel()== "Duck") {
-                        if ((FirstPosLeftMin <= left && left <= FirstPosLeftMax) && (FirstPosRightMin <= right && right <= FirstPosRightMax)) {
+                    mdpt = (left+right)/2;
+
+                    //if (recognition.getLabel()== "Duck") {
+                    if (recognition.getLabel()== "Aztechs_TSE" && recognition.getConfidence() > 0.8) {
+                        if (marvyn.FirstPosMin <= mdpt && mdpt <= marvyn.FirstPosMax ) {
                             PyraPos = 1;
-                        } else if ((SecPosLeftMin <= left && left <= SecPosLeftMax) && (SecPosRightMin <= right && right <= SecPosRightMax)) {
+                        } else if (marvyn.SecPosMin <= mdpt && mdpt <= marvyn.SecPosMax) {
                             PyraPos = 2;
 
                         }
 
                         bDuckFound = true;
-                        mrvTelemetry.addData(String.format("Object (%d:) ", i), recognition.getLabel());
-                        mrvTelemetry.addData("Confidence: ", recognition.getConfidence());
-                        mrvTelemetry.addData("(left, top), (right,bottom): ", String.format(" (%.03f, %.03f)  (%.03f, %.03f) ", left, top, right, bottom));
-//                        mrvTelemetry.addData("Warehouse Level", PyraPos);
-                        mrvTelemetry.update();
+                        telemetry.addLine(String.format("%d. Object (%d:) ", iTeleCt++, i) + recognition.getLabel());
+                        telemetry.addLine(String.format("%d. Confidence: %.3f", iTeleCt++, recognition.getConfidence()));
+                        telemetry.addLine(String.format("%d. BBox (%d), (%.03f, %.03f)  (%.03f, %.03f)", iTeleCt++, i, left, top, right, bottom));
+                        telemetry.addLine(String.format("%d. BBox midpt (%d),  (%.03f)", iTeleCt++, i, mdpt));
+                        telemetry.addLine(String.format("%d. Image Size (%d), Width: %d; Height: %d ",iTeleCt++, i, recognition.getImageWidth(), recognition.getImageHeight()));
+                        telemetry.update();
 
-                        mrvDashboardTelemetryPacket.put(String.format("Object (%d:) ", i), recognition.getLabel());
-                        mrvDashboardTelemetryPacket.put(String.format("Confidence (%d) ", i), recognition.getConfidence());
-                        mrvDashboardTelemetryPacket.put(String.format("BBox (%d),", i), String.format(" (%.03f, %.03f)  (%.03f, %.03f) ", left, top, right, bottom));
-                        mrvDashboardTelemetryPacket.put(String.format("Image Size (%d),", i), String.format(" Width: %d; Height: %d ", recognition.getImageWidth(), recognition.getImageHeight()));
+                        mrvDashboardTelemetryPacket.addLine(String.format("%d. Object (%d:) ", iTeleCt++, i) + recognition.getLabel());
+                        mrvDashboardTelemetryPacket.addLine(String.format("%d. Confidence: %.3f", iTeleCt++, recognition.getConfidence()));
+                        mrvDashboardTelemetryPacket.addLine(String.format("%d. BBox (%d), (%.03f, %.03f)  (%.03f, %.03f)", iTeleCt++, i, left, top, right, bottom));
+                        mrvDashboardTelemetryPacket.addLine(String.format("%d. BBox midpt (%d),  (%.03f)", iTeleCt++, i, mdpt));
+                        mrvDashboardTelemetryPacket.addLine(String.format("%d. Image Size (%d), Width: %d; Height: %d ",iTeleCt++, i, recognition.getImageWidth(), recognition.getImageHeight()));
                         i++;
                         break;
                     }
@@ -265,18 +288,20 @@ public class Mrv_Autonomous extends LinearOpMode {
             }
             else
             {
-                mrvTelemetry.addData("Objects Detected","No Objects detected!");
-                mrvTelemetry.update();
+                telemetry.addLine(String.format("%d. Objects Detected: None!", iTeleCt++));
+                mrvDashboardTelemetryPacket.addLine(String.format("%d. Objects Detected: None!", iTeleCt++));
+                telemetry.update();
                 PyraPos = 0;
             }
         }
-        mrvTelemetry.addData("Warehouse Level", PyraPos);
-        mrvTelemetry.update();
+        telemetry.addLine(String.format("%d. PyraPos: %d", iTeleCt++, PyraPos));
+        mrvDashboardTelemetryPacket.addLine(String.format("%d. PyraPos: %d", iTeleCt++, PyraPos));
+
+        telemetry.update();
 
         return PyraPos;
     }
 
-    // TODO: Autonomous Freight Drop off [Avi/Diya]
     void FreightDropOff(int level)
     {
         int iLinacDropoffPosition = (int)(Linac_Dropoff_Revs*marvyn.Linac_Ticks_Per_Rev) *-1;
@@ -287,6 +312,8 @@ public class Mrv_Autonomous extends LinearOpMode {
                 iDawinchiDropoffPosition = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level0_Dropoff);
 
                 // Set winch to 0 level
+                mrvDashboardTelemetryPacket.addLine(String.format("%d. Setting Dawinchi to Level: %d", iTeleCt++, level));
+                mrvDashboardTelemetryPacket.addLine(String.format("%d. Calculated Dawinchi dropoff pos in ticks = %d", iTeleCt++, iDawinchiDropoffPosition));
                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, STOP_AND_RESET_ENCODER);
                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, RUN_WITHOUT_ENCODER);
                 marvyn.setTargetPosition(Mrv_Robot.MrvMotors.DA_WINCHI, iDawinchiDropoffPosition);
@@ -295,6 +322,7 @@ public class Mrv_Autonomous extends LinearOpMode {
                     idle();
                 }
                 marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
+
 
                 // set Linac to drop off position
                 int iPos = -1*marvyn.Linac_Ticks_Per_Rev;
@@ -307,23 +335,13 @@ public class Mrv_Autonomous extends LinearOpMode {
                 }
                 marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
 
-                sleep(500);
 
-                // Release the claw
-                marvyn.The_Claw.setPosition(Claw_Open_Pos);
-                sleep(1000);
-
-                // retract Linac
-                marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, 0);
-                marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 1);
-                while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.LIN_AC) < 0) {
-                    idle();
-                }
-                marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
                 break;
             case 1: // MIDDLE
                 iDawinchiDropoffPosition = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level1_Dropoff);
 
+                mrvDashboardTelemetryPacket.addLine(String.format("%d. Setting Dawinchi to Level: %d", iTeleCt++, level));
+                mrvDashboardTelemetryPacket.addLine(String.format("%d. Calculated Dawinchi dropoff pos in ticks = %d", iTeleCt++, iDawinchiDropoffPosition));
                 // Set winch to 2 level
                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, STOP_AND_RESET_ENCODER);
                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, RUN_WITHOUT_ENCODER);
@@ -343,23 +361,13 @@ public class Mrv_Autonomous extends LinearOpMode {
                     idle();
                 }
                 marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
-
-                sleep(500);
-                // Release the claw
-                marvyn.The_Claw.setPosition(Claw_Open_Pos);
-                sleep(1000);
-
-                // retract Linac
-                marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, 0);
-                marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 1);
-                while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.LIN_AC) < 0) {
-                    idle();
-                }
-                marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
                 break;
             case 2: // TOP
                 iDawinchiDropoffPosition = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level2_Dropoff);
                 iDawinchiDropoffPosition = -1*iDawinchiDropoffPosition;
+
+                mrvDashboardTelemetryPacket.addLine(String.format("%d. Setting Dawinchi to Level: %d", iTeleCt++, level));
+                mrvDashboardTelemetryPacket.addLine(String.format("%d. Calculated Dawinchi dropoff pos in ticks = %d", iTeleCt++, iDawinchiDropoffPosition));
 
                 int iPos2 = (int)(-1.3*marvyn.Linac_Ticks_Per_Rev);
                 // Set winch to 2 level
@@ -381,101 +389,76 @@ public class Mrv_Autonomous extends LinearOpMode {
                     idle();
                 }
                 marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
-
-                // Release the claw
-                sleep(500);
-                marvyn.The_Claw.setPosition(Claw_Open_Pos);
-                sleep(1000);
-
-                // retract Linac
-                marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, 0);
-                marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 1);
-                while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.LIN_AC) < 0) {
-                    idle();
-                }
-                marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
                 break;
         }
     }
 
+    void CalculateWarehouseDropOffPos(int level)
+    {
+        switch(level)
+        {
+            case 0: // BOTTOM
+                mrvDawinchiCalculatedDropOffPos = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level0_Dropoff);
+                mrvLinacCalcualtedDropOffPos = -1*marvyn.Linac_Ticks_Per_Rev;
+
+                break;
+            case 1: // MIDDLE
+                mrvDawinchiCalculatedDropOffPos = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level1_Dropoff);
+                mrvLinacCalcualtedDropOffPos = -(int)(Linac_Dropoff_Revs*marvyn.Linac_Ticks_Per_Rev) *-1;
+
+                break;
+            case 2: // TOP
+                mrvDawinchiCalculatedDropOffPos = (int) (marvyn.Dawinchi_Ticks_Per_Rev * DaWinchi_Level2_Dropoff * -1);
+                mrvLinacCalcualtedDropOffPos = -(int)(Linac_Dropoff_Revs*marvyn.Linac_Ticks_Per_Rev) *-1;
+
+                break;
+        }
+    }
+
+
     void buildTrajectories()
     {
-        // Red 1 Trajectory
-//        mrvRed1 = marvyn.mecanumDrive.trajectorySequenceBuilder(red_1_pose_estimate)
-//                //drive to hub
-//                .lineToLinearHeading(red_shipping_hub_pos)
-//                //TODO: set exact end pose for duck spline
-//                .lineToLinearHeading(red_duck_wheel_pos)
-//                //do duck
-//                .waitSeconds(3)
-//                //go to warehouse entrance
-//                .lineToLinearHeading(red_warehouse_enter_pos)
-//                //enter warehouse
-//                .lineToLinearHeading(red_warehouse_pos)
-//                //park
-//                .lineToLinearHeading(red_park_pos)
-//
-//                .build()
-//        ;
-//
-//        mrvRed2 = marvyn.mecanumDrive.trajectorySequenceBuilder(red_2_pose_estimate)
-//                //drive to hub
-//                .lineToLinearHeading(red_shipping_hub_pos)
-//                //TODO: set exact end pose for duck spline
-//                .lineToLinearHeading(red_duck_wheel_pos)
-//                //do duck
-//                .waitSeconds(3)
-//                //go to warehouse entrance
-//                .lineToLinearHeading(red_warehouse_enter_pos)
-//                //enter warehouse
-//                .lineToLinearHeading(red_warehouse_pos)
-//                //park
-//                .lineToLinearHeading(red_park_pos)
-//
-//                .build()
-//        ;
-//
-//        mrvBlue2 = marvyn.mecanumDrive.trajectorySequenceBuilder(blue_1_pose_estimate)
-//                //drive to hub
-//                .lineToLinearHeading(blue_shipping_hub_pos)
-//                //TODO: set exact end pose for duck spline
-//                .lineToLinearHeading(blue_duck_wheel_pos)
-//                //do duck
-//                .waitSeconds(3)
-//                //go to warehouse entrance
-//                .lineToLinearHeading(blue_warehouse_enter_pos)
-//                //enter warehouse
-//                .lineToLinearHeading(blue_warehouse_pos)
-//                //park
-//                .lineToLinearHeading(blue_park_pos)
-//
-//                .build()
-//        ;
-//
-        mrvBlue1 = marvyn.mecanumDrive.trajectorySequenceBuilder(blue_1_pose_estimate)
+        telemetry.addLine("Building Trajectories");
+        mrvDashboardTelemetryPacket.addLine("Building Trajectories");
+
+        mrvBlue1 = marvyn.mecanumDrive.trajectorySequenceBuilder(marvyn.blue_1_pose_estimate)
                 //drive to hub
-                .lineToLinearHeading(blue_shipping_hub_pos)
+                .lineToLinearHeading(marvyn.blue_1_shipping_hub_pos)
                 .addTemporalMarker(() -> {
                     FreightDropOff(mrvWarehouseLevel);
                 })
-                .waitSeconds(2)
-                .lineToLinearHeading(blue_duck_wheel_pos)
+                //Release the Claw
+                .addTemporalMarker(()->{
+                    //marvyn.The_Claw.setPosition(Claw_Open_Pos);
+                })
+                .waitSeconds(0.5)
+                .addTemporalMarker(()->{
+                    // retract Linac
+                    marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, 0);
+                    marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 1);
+                    while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.LIN_AC) < 0) {
+                        idle();
+                    }
+                    marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
+                })
+                .lineToLinearHeading(marvyn.blue_duck_wheel_pos)
                 //do duck
                 .addTemporalMarker(() -> {
-                    SpinDuckWheel();
+                    marvyn.setPower(Mrv_Robot.MrvMotors.DUCK_WHEELS, 0.25*-1);
                 })
-                .waitSeconds(2)
-                //go to warehouse entrance
-                .lineToLinearHeading(blue_warehouse_enter_pos)
+                .waitSeconds(3)
+                .addTemporalMarker(() ->{
+                    marvyn.setPower(Mrv_Robot.MrvMotors.DUCK_WHEELS, 0);
+                })
                 //enter warehouse
-                .lineToLinearHeading(blue_warehouse_pos)
-                //park
-                .lineToLinearHeading(blue_park_pos)
+                .lineToLinearHeading(marvyn.blue_storage_pos)
 
                 .build()
         ;
         return;
     }
+
+
 
     // TODO: Autonomous Freight Pickup [Lavanya]
     void FreightPickUp()
@@ -483,7 +466,6 @@ public class Mrv_Autonomous extends LinearOpMode {
 
     }
 
-    // TODO: Autonomous Spin Duck Wheel [Avi/Diya]
     void SpinDuckWheel()
     {
         sleep(1000);
@@ -504,6 +486,104 @@ public class Mrv_Autonomous extends LinearOpMode {
         return result;
     }
 
+    void figureSkating()
+    {
+
+        telemetry.addLine("Figure Skating");
+        mrvDashboardTelemetryPacket.addLine("Figure Skating");
+
+
+        CalculateWarehouseDropOffPos(mrvWarehouseLevel);
+        marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, STOP_AND_RESET_ENCODER);
+        marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, RUN_WITHOUT_ENCODER);
+        marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, STOP_AND_RESET_ENCODER);
+        marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, RUN_WITHOUT_ENCODER);
+
+        mrvBlue1 = marvyn.mecanumDrive.trajectorySequenceBuilder(marvyn.blue_1_pose_estimate)
+                //drive to hub
+                .lineToLinearHeading(marvyn.blue_1_shipping_hub_pos)
+                .addTemporalMarker(() -> {
+                    if(mrvDawinchiCalculatedDropOffPos > 0 )
+                        marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 1);
+                    else
+                        marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, -1);
+                })
+                .addTemporalMarker(0.38, () -> {
+                    marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
+                })
+                .addTemporalMarker( () -> {
+                    marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, -1);
+                })
+                .addTemporalMarker( () -> {
+                    marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
+                })
+                .addTemporalMarker(1.6, ()->{
+                    //marvyn.The_Claw.setPosition(Claw_Open_Pos);
+                })
+                .waitSeconds(0.5)
+                .addTemporalMarker(()->{
+                    // retract Linac
+                    marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, 0);
+                    marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 1);
+                    while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.LIN_AC) < 0) {
+                        idle();
+                    }
+                    marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
+                })
+                //.waitSeconds(2)
+                .lineToLinearHeading(marvyn.blue_duck_wheel_pos)
+                //do duck
+                .addTemporalMarker(() -> {
+                    marvyn.setPower(Mrv_Robot.MrvMotors.DUCK_WHEELS, 0.25*-1);
+                })
+                .waitSeconds(3)
+                .addTemporalMarker(() ->{
+                    marvyn.setPower(Mrv_Robot.MrvMotors.DUCK_WHEELS, 0);
+                })
+                //enter warehouse
+                .lineToLinearHeading(marvyn.blue_storage_pos)
+
+                .build()
+        ;
+
+
+        mrvBlue2 = marvyn.mecanumDrive.trajectorySequenceBuilder(blue_2_pose_estimate)
+                //drive to hub
+                .lineToLinearHeading(blue_2_shipping_hub_pos)
+                .waitSeconds(0.5)
+                .lineToLinearHeading(blue_warehouse_enter_pos)
+                //go to warehouse entrance
+                .lineToLinearHeading(blue_warehouse_pos, marvyn.mecanumDrive.getVelocityConstraint(15, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), marvyn.mecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                .lineToLinearHeading(blue_warehouse_enter_pos)
+                .lineToLinearHeading(blue_2_shipping_hub_pos)
+                .waitSeconds(0.5)
+                .lineToLinearHeading(blue_warehouse_enter_pos)
+                .lineToLinearHeading(blue_warehouse_pos, marvyn.mecanumDrive.getVelocityConstraint(15, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), marvyn.mecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                .lineToLinearHeading(blue_warehouse_enter_pos)
+                .lineToLinearHeading(blue_2_shipping_hub_pos)
+                .waitSeconds(0.5)
+                .lineToLinearHeading(blue_warehouse_enter_pos)
+                .splineToLinearHeading(blue_warehouse_pos, Math.toRadians(0), marvyn.mecanumDrive.getVelocityConstraint(15, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), marvyn.mecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                .splineToSplineHeading(blue_park_pos, Math.toRadians(90))
+
+                .build()
+        ;
+        mrvDashboardTelemetryPacket.put("Trjectory Duration after build: ", mrvBlue2.duration());
+        return;
+
+    }
+
+    void GoToPickupPosition()
+    {
+        //
+        marvyn.Wristy.setPosition(0.30);
+        marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 1);
+        while(marvyn.Touche.getState() != true)
+            idle();
+        marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
+        int iCurrentWinchPos = marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI);
+        int iWinchDelta = 0 - iCurrentWinchPos;
+    }
 
 }
 
