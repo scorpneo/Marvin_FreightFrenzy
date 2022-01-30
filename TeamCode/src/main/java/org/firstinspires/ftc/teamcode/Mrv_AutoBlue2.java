@@ -152,7 +152,7 @@ public class Mrv_AutoBlue2 extends LinearOpMode {
         FtcDashboard.getInstance().sendTelemetryPacket(mrvDashboardTelemetryPacket);
 
         // Set the claw to hold the preloaded element
-        marvyn.The_Claw.setPosition(Claw_Close_Pos);
+//        marvyn.The_Claw.setPosition(Claw_Close_Pos);
 
         // Startup camera
         mrvDashboard.startCameraStream(mrvTfod, 0); // start streaming camera
@@ -348,9 +348,9 @@ public class Mrv_AutoBlue2 extends LinearOpMode {
                     FreightDropOff(mrvWarehouseLevel);
                 })
                 //Release the Claw
-                .addTemporalMarker(()->{
-                    marvyn.The_Claw.setPosition(Claw_Open_Pos);
-                })
+//                .addTemporalMarker(()->{
+//                    marvyn.The_Claw.setPosition(Claw_Open_Pos);
+//                })
                 .waitSeconds(0.5)
                 .addTemporalMarker(()->{
                     // retract Linac
