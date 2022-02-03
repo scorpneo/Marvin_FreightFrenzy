@@ -47,16 +47,17 @@ public class MeepMeepTesting {
         Pose2d red_park_pos = new Pose2d(64, -36, Math.toRadians(-90));
 
 
-        double dFromLevel0ToPickup = 0.3;    // 1. Time to lower from level 0 -> Pickup
+        double dFromLevel0ToPickup = 0.2;    // 1. Time to lower from level 0 -> Pickup
         double dFromLevel1ToPickup = 0.3;    // 2. Time to lower from level 1 -> Pickup
-        double dFromLevel2ToPickup = 0.3;    // 3. Time to lower from level 2 -> Pickup
-        double dRaiseToLevel2      = 0.3;    // 4. Time to raise from Pickup -> level2
-        double dEjectFreight       = 0.3;    // 5. Time to drop off freight element
+        double dFromLevel2ToPickup = 0.8;    // 3. Time to lower from level 2 -> Pickup
+        double dRaiseToLevel2      = 0.8;    // 4. Time to raise from Pickup -> level2
+        double dEjectFreight       = 0.5;    // 5. Time to drop off freight element
         double dIntakeFreight      = 0.3;    // 6. Time to pick up freight element
-        double offsetEjectFreight  = 0.3;    // 7. Offset to eject freight after reaching shipping hub pos
-        double offsetPickupFreight = 0.3;    // 8. Offset to pickup freight before reaching warehouse pos
-        double offsetLowerToPickup = 0.3;  // 9. Offset to lower to pickup position (Start to do this after retracting from drop-off position)
-        double offsetRaiseToDropOff = 0.3; // 10. Offset to raise to drop-off position (Start to do this after retracting from pickup position)
+        double offsetEjectFreight  = 0.1;    // 7. Offset to eject freight after reaching shipping hub pos
+        double offsetIntakeFreight = -0.2;    // 8. Offset to pickup freight before reaching warehouse pos
+        double offsetLowerToPickup = -0.1;    // 9. Offset to lower to pickup position (Start to do this after retracting from drop-off position)
+        double offsetRaiseToDropOff = -0.2;   // 10. Offset to raise to drop-off position (Start to do this after retracting from pickup position)
+
 
         double dWarehouseLevelToPickup = dFromLevel0ToPickup;
 
@@ -88,7 +89,7 @@ public class MeepMeepTesting {
                                 })
                                 // Step2: Enter Warehouse, Pickup freight, drop it off and return to Warehouse enter pos
                                 .lineToLinearHeading(blue_warehouse_pos1)
-                                .UNSTABLE_addTemporalMarkerOffset(offsetPickupFreight, () -> { // Start intake 0.3 seconds before reahing warehouse_pos and keep running them for 0.5 seconds after.
+                                .UNSTABLE_addTemporalMarkerOffset(offsetIntakeFreight, () -> { // Start intake 0.3 seconds before reahing warehouse_pos and keep running them for 0.5 seconds after.
 //                                    marvyn.Claw_Left.setPower(0.5);
 //                                    marvyn.Claw_Right.setPower(0.5);
                                 })
@@ -128,7 +129,7 @@ public class MeepMeepTesting {
 
                                 // Step 3: Enter Warehouse, Pickup freight, drop it off and return to Warehouse enter pos
                                 .lineToLinearHeading(blue_warehouse_pos2)//, marvyn.mecanumDrive.getVelocityConstraint(slower_speed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), marvyn.mecanumDrive.getAccelerationConstraint(slower_accel))
-                                .UNSTABLE_addTemporalMarkerOffset(offsetPickupFreight, () -> { // Start intake 0.3 seconds before reahing warehouse_pos and keep running them for 0.5 seconds after.
+                                .UNSTABLE_addTemporalMarkerOffset(offsetIntakeFreight, () -> { // Start intake 0.3 seconds before reahing warehouse_pos and keep running them for 0.5 seconds after.
 //                                    marvyn.Claw_Left.setPower(0.5);
 //                                    marvyn.Claw_Right.setPower(0.5);
                                 })
