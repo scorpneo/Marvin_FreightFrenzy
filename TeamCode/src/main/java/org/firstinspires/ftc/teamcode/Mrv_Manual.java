@@ -56,8 +56,9 @@ public class Mrv_Manual extends LinearOpMode {
 
     public static double speedAdjust = 5;
     public static double linacAdjust = 10;
-    public static double dawinchAdjust = 8;
-    private boolean assumingGrabPosition = false;
+    public static double dawinchAdjust = 6;
+    private boolean assumingPickPosition = false;
+    private boolean assumingDropPosition = false;
     private boolean changingWheelSpeed = false;
     private boolean changingLinacSpeed = false;
     private boolean changingDaWinchiSpeed = false;
@@ -69,20 +70,23 @@ public class Mrv_Manual extends LinearOpMode {
     double position = 0.5; // Start at halfway position
     public static double Wrist_Parallel_to_Linac = 0.425; // Parallel to arm
     public static double Wrist_chute_dropoff = 0.85; // Perpendicular to Arm at top
-    public static double Wrist_Start_Pos = 0.0; // Perpendicular to Arm at bottom
+    public static double Wrist_Pos = 0.3;
+    public static double Wrist_Start_Pos = 0.3; // Perpendicular to Arm at bottom
+    public static double Wrist_Pickup_Pos = 0.3;
+    public static double Wrist_Dropoff_Pos = 0.4;
     public static double wrist_increment = 0.05;
 
 
     //0.52 for picking up preset
     public static double Claw_Open_Pos = 0.4;
     public static double Claw_Close_Pos = 0.0;
-    public static double Wrist_Pos = 0.3;
     public static int Winch_Parallel_to_ground = 100;
     public static int Linac_Parallel_to_ground = 100;
     public static int Winch_Chute_Dropoff = 100;
     public static int Linac_Chute_Dropoff = 100;
 
     public static int BUTTON_TRIGGER_TIMER_MS = 500;
+    public static int Wristy_Button_Trigger_Timer_Ms = 85;
     public static int Linac_Grab_Position_Ticks = 288; // From REV Robotics Core HEX
     public static int Dawinchi_Grab_Position_Ticks = 1120; // From REV Robotics HD HEX 40:1
 
@@ -97,7 +101,8 @@ public class Mrv_Manual extends LinearOpMode {
     private static ElapsedTime timer_gp2_buttonA = new ElapsedTime(MILLISECONDS);
     private static ElapsedTime timer_gp2_buttonX;
     private static ElapsedTime timer_gp2_buttonY;
-    private static ElapsedTime timer_gp2_buttonB;
+    private static ElapsedTime timer_gp2_buttonB = new ElapsedTime(MILLISECONDS);
+    ;
     private static ElapsedTime timer_gp2_dpad_up = new ElapsedTime(MILLISECONDS);
     private static ElapsedTime timer_gp2_dpad_down = new ElapsedTime(MILLISECONDS);
     private static ElapsedTime timer_gp2_dpad_left = new ElapsedTime(MILLISECONDS);
@@ -127,14 +132,13 @@ public class Mrv_Manual extends LinearOpMode {
             mrvLinAc();
             mrvDaWinchi();
             mrvWrist();
-            //mrvSwitchtoGrabPosition();
+            mrvSwitchtoGrabPosition();
             mrvIntakeClaw();
             //mrvAppendagePresets();
         }
     }
 
-    public void mrvIntakeClaw()
-    {
+    public void mrvIntakeClaw() {
         boolean bIntake = gamepad2.right_trigger == 1f;
         boolean bOuttake = gamepad2.left_trigger == 1f;
 
@@ -144,12 +148,10 @@ public class Mrv_Manual extends LinearOpMode {
         if (bIntake) {
             marvyn.Claw_Left.setPower(0.5);
             marvyn.Claw_Right.setPower(0.5);
-        }
-        else if (bOuttake){
+        } else if (bOuttake) {
             marvyn.Claw_Left.setPower(-0.5);
             marvyn.Claw_Right.setPower(-0.5);
-        }
-        else {
+        } else {
             marvyn.Claw_Left.setPower(0);
             marvyn.Claw_Right.setPower(0);
         }
@@ -160,11 +162,9 @@ public class Mrv_Manual extends LinearOpMode {
         msStuckDetectStop = 2500;
         mrvDashboard = FtcDashboard.getInstance();
 
-       // marvyn.The_Claw.setPosition(0);
-        marvyn.Wristy.setPosition(Wrist_Start_Pos);
-
         // TODO: Make this work if drivers agree. (Calling this method does nothing because it checks for gamepad2.a)
         mrvSwitchtoGrabPosition();
+        Wrist_Pos = Wrist_Start_Pos;
 
         telemetry.addData("Status:", "Marvyn ready to grab freight!");
         telemetry.update();
@@ -206,176 +206,157 @@ public class Mrv_Manual extends LinearOpMode {
             }
         }
 
-            float turnDir = gamepad1.right_stick_x;
-            float moveDir = gamepad1.left_stick_y;
-            float strafeDir = gamepad1.left_stick_x;
+        float turnDir = gamepad1.right_stick_x;
+        float moveDir = gamepad1.left_stick_y;
+        float strafeDir = gamepad1.left_stick_x;
 
-            if (turnDir > 1) {
-                turnDir = 1;
-            } else if (turnDir < -1) {
-                turnDir = -1;
-            }
-            marvyn.lower_left.setPower((moveDir + strafeDir - turnDir) * (-speedAdjust / 10)); // 1.0
-            marvyn.lower_right.setPower((moveDir - strafeDir + turnDir) * (-speedAdjust / 10)); // 1.0
-            marvyn.upper_left.setPower((moveDir - strafeDir - turnDir) * (-speedAdjust / 10)); // 0
-            marvyn.upper_right.setPower((moveDir + strafeDir + turnDir) * (-speedAdjust / 10)); // 0
-
-            return;
+        if (turnDir > 1) {
+            turnDir = 1;
+        } else if (turnDir < -1) {
+            turnDir = -1;
         }
+        marvyn.lower_left.setPower((moveDir + strafeDir - turnDir) * (-speedAdjust / 10)); // 1.0
+        marvyn.lower_right.setPower((moveDir - strafeDir + turnDir) * (-speedAdjust / 10)); // 1.0
+        marvyn.upper_left.setPower((moveDir - strafeDir - turnDir) * (-speedAdjust / 10)); // 0
+        marvyn.upper_right.setPower((moveDir + strafeDir + turnDir) * (-speedAdjust / 10)); // 0
 
-        public void mrvDuckWheel () {
+        return;
+    }
 
-            if (gamepad2.left_bumper) {
-                DuckOn = gamepad2.left_bumper;
-                telemetry.addData("Duck Wheel toggle to:", DuckOn);
-                if (DuckOn) {
-                    telemetry.addData("Duck Wheelsss:", "Spinning Clockwise");
-                    telemetry.update();
-                    DuckPowerDir = 1;
-                }
-                sleep(500);
-            } else if (gamepad2.right_bumper) {
-                DuckOn = gamepad2.right_bumper;
-                telemetry.addData("Duck Wheel toggle to:", DuckOn);
-                if (DuckOn) {
-                    telemetry.addData("Duck Wheelsss:", "Spinning Counterclockwise");
-                    telemetry.update();
-                    DuckPowerDir = -1;
-                }
-                sleep(500);
-            } else {
-                DuckOn = false;
-            }
+    public void mrvDuckWheel() {
 
+        if (gamepad2.left_bumper) {
+            DuckOn = gamepad2.left_bumper;
+            telemetry.addData("Duck Wheel toggle to:", DuckOn);
             if (DuckOn) {
-                marvyn.setPower(Mrv_Robot.MrvMotors.DUCK_WHEELS,duck_power * DuckPowerDir);
-            } else {
-                marvyn.setPower(Mrv_Robot.MrvMotors.DUCK_WHEELS,0);
+                telemetry.addData("Duck Wheelsss:", "Spinning Clockwise");
+                telemetry.update();
+                DuckPowerDir = 1;
             }
-            return;
+            sleep(500);
+        } else if (gamepad2.right_bumper) {
+            DuckOn = gamepad2.right_bumper;
+            telemetry.addData("Duck Wheel toggle to:", DuckOn);
+            if (DuckOn) {
+                telemetry.addData("Duck Wheelsss:", "Spinning Counterclockwise");
+                telemetry.update();
+                DuckPowerDir = -1;
+            }
+            sleep(500);
+        } else {
+            DuckOn = false;
         }
 
-
-
-
-        public void mrvClaw ()
-        {
-            ServoTurn = gamepad2.right_trigger == 1f;
-            // slew the servo, according to the rampUp (direction) variable.
-            if (ServoTurn) {
-                position = Claw_Open_Pos;
-            } else {
-                position = Claw_Close_Pos;
-            }
-
-            // Set the servo to the new position and pause;
-           //
-            //
-            // marvyn.The_Claw.setPosition(position);
+        if (DuckOn) {
+            marvyn.setPower(Mrv_Robot.MrvMotors.DUCK_WHEELS, duck_power * DuckPowerDir);
+        } else {
+            marvyn.setPower(Mrv_Robot.MrvMotors.DUCK_WHEELS, 0);
         }
+        return;
+    }
 
-        public void mrvWrist ()
-        {
-           // if (gamepad2.left_trigger == 1f) {
-             //  Wrist_Pos = Wrist_chute_dropoff;
-            //} else
-            if (gamepad2.dpad_down) {
-                if (!changingWrist) {
-                    timer_gp2_dpad_down.reset();
-                    changingWrist = true;
-                } else if (timer_gp2_dpad_down.time(TimeUnit.MILLISECONDS) > BUTTON_TRIGGER_TIMER_MS/2) {
-                    if (Wrist_Pos <= 0.35) {
-                        Wrist_Pos = 0.35;
-                    } else {
-                        Wrist_Pos -= wrist_increment;
-                    }
-                    telemetry.addData("Wrist Pos: ", "%f", Wrist_Pos);
-                    telemetry.update();
-                    changingWrist = false;
-                }
-            } else  if (gamepad2.dpad_up) {
-                if (!changingWrist) {
-                    timer_gp2_dpad_up.reset();
-                    changingWrist = true;
-                } else if (timer_gp2_dpad_up.time(TimeUnit.MILLISECONDS) > BUTTON_TRIGGER_TIMER_MS/2) {
-                    if (Wrist_Pos >= Wrist_chute_dropoff) {
-                        Wrist_Pos = Wrist_chute_dropoff;
-                    } else {
-                        Wrist_Pos += wrist_increment;
-                    }
-                    telemetry.addData("Wrist Pos: ", "%f", Wrist_Pos);
-                    telemetry.update();
-                    changingWrist = false;
-                }
-            }
-            //default
-          //  else{
-           //     Wrist_Pos = Wrist_Parallel_to_Linac;
-           // }
-
-            marvyn.Wristy.setPosition(Wrist_Pos);
-            return;
-        }
-
-        public void mrvLinAc ()
-        {
-            if (!marvyn.Touche.getState() == true) {
-                if(-gamepad2.left_stick_y < 0){
-                    marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
-                } else {
-                    marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, -gamepad2.left_stick_y * (linacAdjust / 10));
-                }
-            } else {
-                marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, -gamepad2.left_stick_y * (linacAdjust / 10));
-            }
-        }
-
-        public void mrvDaWinchi ()
-        {
-            marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, gamepad2.right_stick_y * (dawinchAdjust / 10));
-        }
-
-
-        public void mrvSwitchtoGrabPosition () {
-            if (gamepad2.a) {
-                if (!assumingGrabPosition) {
-                    timer_gp2_buttonA.reset();
-                    assumingGrabPosition = true;
-                } else if (timer_gp2_buttonA.time(TimeUnit.MILLISECONDS) > BUTTON_TRIGGER_TIMER_MS) {
-                    telemetry.addLine("GP2_A triggered. Will set Linac");
-                    telemetry.update();
-
-                    // Set Linac to Grab Position
-                    marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, STOP_AND_RESET_ENCODER);
-                    marvyn.setRunMode(Mrv_Robot.MrvMotors.LIN_AC, RUN_WITHOUT_ENCODER);
-                    marvyn.setTargetPosition(Mrv_Robot.MrvMotors.LIN_AC, Linac_Grab_Position_Ticks);
-                    marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 1);
-                    while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.LIN_AC) < Linac_Grab_Position_Ticks) {
-                        idle();
-                    }
-                    marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
-
-//                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, STOP_AND_RESET_ENCODER);
-//                 marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, RUN_WITHOUT_ENCODER);
-//                 marvyn.setTargetPosition(Mrv_Robot.MrvMotors.DA_WINCHI, Dawinchi_Grab_Position_Ticks);
-//                 marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 1);
-//                 while(opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI) < Dawinchi_Grab_Position_Ticks )
-//                 {
-//                     idle();
-//                 }
-//                 marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
-
-                    // Set Wrist Position parallel to ground
-                    marvyn.Wristy.setPosition(Wrist_Parallel_to_Linac);
-                 //   marvyn.The_Claw.setPosition(0);
-                    assumingGrabPosition = false;
-                }
-            } else {
-                assumingGrabPosition = false;
-            }
+    public void mrvClaw() {
+        ServoTurn = gamepad2.right_trigger == 1f;
+        // slew the servo, according to the rampUp (direction) variable.
+        if (ServoTurn) {
+            position = Claw_Open_Pos;
+        } else {
+            position = Claw_Close_Pos;
         }
 
     }
+
+    public void mrvWrist() {
+        // if (gamepad2.left_trigger == 1f) {
+        //  Wrist_Pos = Wrist_chute_dropoff;
+        //} else
+        if (gamepad2.dpad_down) {
+            if (!changingWrist) {
+                timer_gp2_dpad_down.reset();
+                changingWrist = true;
+            } else if (timer_gp2_dpad_down.time(TimeUnit.MILLISECONDS) > Wristy_Button_Trigger_Timer_Ms) {
+                if (Wrist_Pos <= Wrist_Start_Pos) {
+                    Wrist_Pos = Wrist_Start_Pos;
+                } else {
+                    Wrist_Pos -= wrist_increment;
+                }
+                telemetry.addData("Wrist Pos: ", "%f", Wrist_Pos);
+                telemetry.update();
+                changingWrist = false;
+            }
+        } else if (gamepad2.dpad_up) {
+            if (!changingWrist) {
+                timer_gp2_dpad_up.reset();
+                changingWrist = true;
+            } else if (timer_gp2_dpad_up.time(TimeUnit.MILLISECONDS) > Wristy_Button_Trigger_Timer_Ms) {
+                if (Wrist_Pos >= Wrist_chute_dropoff) {
+                    Wrist_Pos = Wrist_chute_dropoff;
+                } else {
+                    Wrist_Pos += wrist_increment;
+                }
+                telemetry.addData("Wrist Pos: ", "%f", Wrist_Pos);
+                telemetry.update();
+                changingWrist = false;
+            }
+        }
+
+        if (gamepad2.a) {
+            if (!assumingPickPosition) {
+                timer_gp2_buttonA.reset();
+                assumingPickPosition = true;
+            } else if (timer_gp2_buttonA.time(TimeUnit.MILLISECONDS) > BUTTON_TRIGGER_TIMER_MS) {
+                telemetry.addLine("GP2_A triggered. Will set Wrist to Pickup position");
+                telemetry.update();
+                Wrist_Pos = Wrist_Pickup_Pos;
+                //   marvyn.The_Claw.setPosition(0);
+                assumingPickPosition = false;
+            }
+        }
+
+        if (gamepad2.b) {
+            if (!assumingDropPosition) {
+                timer_gp2_buttonB.reset();
+                assumingDropPosition = true;
+            } else if (timer_gp2_buttonA.time(TimeUnit.MILLISECONDS) > BUTTON_TRIGGER_TIMER_MS) {
+                telemetry.addLine("GP2_B triggered. Will set Wrist to Pickup position");
+                telemetry.update();
+                Wrist_Pos = Wrist_Dropoff_Pos;
+                assumingDropPosition = false;
+            }
+        } else {
+            assumingDropPosition = false;
+        }
+        //default
+        //  else{
+        //     Wrist_Pos = Wrist_Parallel_to_Linac;
+        // }
+
+        marvyn.Wristy.setPosition(Wrist_Pos);
+        return;
+    }
+
+    public void mrvLinAc() {
+        if (!marvyn.Touche.getState() == true) {
+            if (-gamepad2.left_stick_y < 0) {
+                marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, 0);
+            } else {
+                marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, -gamepad2.left_stick_y * (linacAdjust / 10));
+            }
+        } else {
+            marvyn.setPower(Mrv_Robot.MrvMotors.LIN_AC, -gamepad2.left_stick_y * (linacAdjust / 10));
+        }
+    }
+
+    public void mrvDaWinchi() {
+        marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, gamepad2.right_stick_y * (dawinchAdjust / 10));
+    }
+
+
+    public void mrvSwitchtoGrabPosition() {
+    }
+}
+
+
 
 
 

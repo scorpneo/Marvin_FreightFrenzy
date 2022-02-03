@@ -132,7 +132,7 @@ public class Mrv_Robot
     public static Pose2d blue_park_pos             = new Pose2d( 64, 36, Math.toRadians(90));
     public static Pose2d red_park_pos              = new Pose2d( 64, -36, Math.toRadians(-90));
 
-    public static int Dawinchi_Ticks_Per_Rev = 295; // From REV Robotics HD HEX 40:1
+    public static int Dawinchi_Ticks_Per_Rev = 1060; // 295; // From REV Robotics HD HEX 40:1
     public static int Linac_Ticks_Per_Rev = 288; // From REV Robotics Core HEX
 
 
