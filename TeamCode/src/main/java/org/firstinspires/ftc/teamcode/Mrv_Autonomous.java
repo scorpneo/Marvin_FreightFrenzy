@@ -136,16 +136,16 @@ public class Mrv_Autonomous extends LinearOpMode {
     // We will do Offsets and durations
     //    duration = how long to keep motor on (Start motor, keep on for duration, stop motor)
     //    offset = when to start (either before or after previous)
-    public static double dFromLevel0ToPickup = 0.3;    // 1. Time to lower from level 0 -> Pickup
+    public static double dFromLevel0ToPickup = 0.2;    // 1. Time to lower from level 0 -> Pickup
     public static double dFromLevel1ToPickup = 0.3;    // 2. Time to lower from level 1 -> Pickup
-    public static double dFromLevel2ToPickup = 0.3;    // 3. Time to lower from level 2 -> Pickup
-    public static double dRaiseToLevel2 = 0.3;    // 4. Time to raise from Pickup -> level2
-    public static double dEjectFreight       = 0.3;    // 5. Time to drop off freight element
+    public static double dFromLevel2ToPickup = 0.8;    // 3. Time to lower from level 2 -> Pickup
+    public static double dRaiseToLevel2      = 0.8;    // 4. Time to raise from Pickup -> level2
+    public static double dEjectFreight       = 0.5;    // 5. Time to drop off freight element
     public static double dIntakeFreight      = 0.3;    // 6. Time to pick up freight element
-    public static double offsetEjectFreight  = 0.3;    // 7. Offset to eject freight after reaching shipping hub pos
-    public static double offsetPickupFreight = 0.3;    // 8. Offset to pickup freight before reaching warehouse pos
-    public static double offsetLowerToPickup = 0.3;  // 9. Offset to lower to pickup position (Start to do this after retracting from drop-off position)
-    public static double offsetRaiseToDropOff = 0.3; // 10. Offset to raise to drop-off position (Start to do this after retracting from pickup position)
+    public static double offsetEjectFreight  = 0.1;    // 7. Offset to eject freight after reaching shipping hub pos
+    public static double offsetIntakeFreight = -0.2;    // 8. Offset to pickup freight before reaching warehouse pos
+    public static double offsetLowerToPickup = -0.1;    // 9. Offset to lower to pickup position (Start to do this after retracting from drop-off position)
+    public static double offsetRaiseToDropOff = -0.2;   // 10. Offset to raise to drop-off position (Start to do this after retracting from pickup position)
 
     public static boolean runProfiling = false;
 
@@ -330,7 +330,7 @@ public class Mrv_Autonomous extends LinearOpMode {
         return PyraPos;
     }
 
-
+    // TODO: Update DuckWheel Trajectories for new positions
     void buildDuckWheelTrajectories() {
         telemetry.addLine("Building Trajectories");
         mrvDashboardTelemetryPacket.addLine("Building Trajectories");
@@ -402,7 +402,7 @@ public class Mrv_Autonomous extends LinearOpMode {
 
             // Step2: Enter Warehouse, Pickup freight, drop it off and return to Warehouse enter pos
                 .lineToLinearHeading(blue_warehouse_pos1, marvyn.mecanumDrive.getVelocityConstraint(slower_speed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), marvyn.mecanumDrive.getAccelerationConstraint(slower_accel))
-                .UNSTABLE_addTemporalMarkerOffset(offsetPickupFreight, () -> { // Start intake 0.3 seconds before reahing warehouse_pos and keep running them for 0.5 seconds after.
+                .UNSTABLE_addTemporalMarkerOffset(offsetIntakeFreight, () -> { // Start intake 0.3 seconds before reahing warehouse_pos and keep running them for 0.5 seconds after.
                     marvyn.Claw_Left.setPower(0.5);
                     marvyn.Claw_Right.setPower(0.5);
                 })
@@ -442,7 +442,7 @@ public class Mrv_Autonomous extends LinearOpMode {
 
              // Step 3: Enter Warehouse, Pickup freight, drop it off and return to Warehouse enter pos
                 .lineToLinearHeading(blue_warehouse_pos2, marvyn.mecanumDrive.getVelocityConstraint(slower_speed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), marvyn.mecanumDrive.getAccelerationConstraint(slower_accel))
-                .UNSTABLE_addTemporalMarkerOffset(offsetPickupFreight, () -> { // Start intake 0.3 seconds before reahing warehouse_pos and keep running them for 0.5 seconds after.
+                .UNSTABLE_addTemporalMarkerOffset(offsetIntakeFreight, () -> { // Start intake 0.3 seconds before reahing warehouse_pos and keep running them for 0.5 seconds after.
                     marvyn.Claw_Left.setPower(0.5);
                     marvyn.Claw_Right.setPower(0.5);
                 })
