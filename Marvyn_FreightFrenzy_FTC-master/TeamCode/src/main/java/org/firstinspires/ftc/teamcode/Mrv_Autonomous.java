@@ -151,7 +151,7 @@ public class Mrv_Autonomous extends LinearOpMode {
     public static double offsetRaiseToDropOff = -0.2;   // 10. Offset to raise to drop-off position (Start to do this after retracting from pickup position)
 
     public static boolean runProfiling = false;
-    public static boolean runTimingTrajectories = true;
+    public static boolean profileUsingRunToPosition = false;
     public static boolean runPositionTrajectories = false;
 
     @Override
@@ -268,8 +268,6 @@ public class Mrv_Autonomous extends LinearOpMode {
             telemetry.addLine(String.format("%d. Total time to complete Trajectory Sequence: %.3f ", iTeleCt++, trajectoryTimer.seconds()));
             mrvDashboardTelemetryPacket.addLine(String.format("%d. Total time to complete Trajectory Sequence: %.3f ", iTeleCt++, trajectoryTimer.seconds()));
         }
-
-
 
         telemetry.update();
         mrvDashboard.sendTelemetryPacket(mrvDashboardTelemetryPacket);
@@ -670,14 +668,28 @@ public class Mrv_Autonomous extends LinearOpMode {
         double dDawinchiPower = 1*DaWinchi_Power;
 
         ElapsedTime timer = new ElapsedTime(MILLISECONDS);
-        timer.reset();
-        marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, dDawinchiPower);
-        while(opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI) < iDawinchiPickupPos) {
-            idle();
+        double timeTaken = 0f;
+        int iCurrentPos = 0;
+
+        if(!profileUsingRunToPosition) {
+            timer.reset();
+            marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, dDawinchiPower);
+            while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI) < iDawinchiPickupPos) {
+                idle();
+            }
+            marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
         }
-        double timeTaken = timer.seconds();
-        int iCurrentPos = marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI);
-        marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
+        else {
+            marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI,RUN_TO_POSITION);
+            marvyn.setTargetPosition(Mrv_Robot.MrvMotors.DA_WINCHI, iDawinchiPickupPos);
+            timer.reset();
+            marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, dDawinchiPower);
+            while(opModeIsActive() && marvyn.areMotorsBusy(Mrv_Robot.MrvMotors.DA_WINCHI)) {
+                idle();
+            }
+        }
+        timeTaken = timer.seconds();
+        iCurrentPos = marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI);
         mrvDashboardTelemetryPacket.addLine(String.format("%d. Lower Winch to Pickup position: %d, Current Position: %d Time taken to  %.3f s", iTeleCt++, iDawinchiPickupPos, iCurrentPos, timeTaken));
 
     }
@@ -701,15 +713,29 @@ public class Mrv_Autonomous extends LinearOpMode {
         int iDawinchiDropoffPos = -1*Dawinchi_dropoff_ticks;
         double dDawinchiPower = -1*DaWinchi_Power;
         ElapsedTime timer = new ElapsedTime(MILLISECONDS);
-        timer.reset();
-        marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, dDawinchiPower);
-        while(opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI) > iDawinchiDropoffPos) {
-            idle();
+        double timeTaken = 0;
+        int iCurrentPos = 0;
+
+        if(!profileUsingRunToPosition) {
+            timer.reset();
+            marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, dDawinchiPower);
+            while (opModeIsActive() && marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI) > iDawinchiDropoffPos) {
+                idle();
+            }
+            marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
         }
-        double timeTaken = timer.seconds();
-        int iCurrentPos = marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI);
-        marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
-        marvyn.duck_wheel.setPower(0);
+        else {
+            marvyn.setRunMode(Mrv_Robot.MrvMotors.DA_WINCHI, RUN_TO_POSITION);
+            marvyn.setTargetPosition(Mrv_Robot.MrvMotors.DA_WINCHI, iDawinchiDropoffPos);
+            timer.reset();
+            marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, dDawinchiPower);
+            while (opModeIsActive() && marvyn.areMotorsBusy(Mrv_Robot.MrvMotors.DA_WINCHI)) {
+                idle();
+            }
+        }
+        timeTaken = timer.seconds();
+        iCurrentPos = marvyn.getCurrentPosition(Mrv_Robot.MrvMotors.DA_WINCHI);
+
         mrvDashboardTelemetryPacket.addLine(String.format("%d. Raise Winch to level: %d, position %d: iCurrentPos %d, Time taken: %.3f s", iTeleCt++, iLevel, iDawinchiDropoffPos, iCurrentPos, timeTaken));
     }
 
