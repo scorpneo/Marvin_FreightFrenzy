@@ -93,11 +93,11 @@ public class Mrv_Autonomous extends LinearOpMode {
     Pose2d blue_duck_wheel_pos = new Pose2d(-59.75, 55, Math.toRadians(0));
     Pose2d red_duck_wheel_pos = new Pose2d(-59.75, -55, Math.toRadians(0));
 
-    Pose2d blue_warehouse_enter_pos = new Pose2d(11, 64.75, Math.toRadians(0));
+    Pose2d blue_warehouse_enter_pos = new Pose2d(11, 63.75, Math.toRadians(0));
     Pose2d red_warehouse_enter_pos = new Pose2d(11, -64.75, Math.toRadians(0));
 
     Pose2d blue_warehouse_pos1 = new Pose2d(42.75, 64.75, Math.toRadians(0));
-    Pose2d blue_warehouse_pos2 = new Pose2d(45.75, 64.75, Math.toRadians(0));
+    Pose2d blue_warehouse_pos2 = new Pose2d(46.75, 64.75, Math.toRadians(0));
     Pose2d red_warehouse_pos = new Pose2d(36.75, -64.75, Math.toRadians(0));
 
     Pose2d blue_storage_pos = new Pose2d(-59.75, 35.5, Math.toRadians(0));
@@ -114,8 +114,8 @@ public class Mrv_Autonomous extends LinearOpMode {
     public static double Wrist_Dropoff_Pos = 0.4;
 
     // Speed control variables
-    public static double slower_speed = 25;
-    public static double slower_accel = 25;
+    public static double slower_speed = 40;
+    public static double slower_accel = 40;
 
     // Drop of Warehouse
     // TODO: DaWinchi positions: Fine tune and move to Mrv_Robot
@@ -138,13 +138,13 @@ public class Mrv_Autonomous extends LinearOpMode {
     //    offset = when to start (either before or after previous)
     public static double dFromLevel0ToPickup = 0.2;    // 1. Time to lower from level 0 -> Pickup
     public static double dFromLevel1ToPickup = 0.3;    // 2. Time to lower from level 1 -> Pickup
-    public static double dFromLevel2ToPickup = 0.8;    // 3. Time to lower from level 2 -> Pickup
+    public static double dFromLevel2ToPickup = 0.36;    // 3. Time to lower from level 2 -> Pickup
     public static double dRaiseToLevel2      = 0.8;    // 4. Time to raise from Pickup -> level2
-    public static double dEjectFreight       = 0.5;    // 5. Time to drop off freight element
+    public static double dEjectFreight       = 1;    // 5. Time to drop off freight element
     public static double dIntakeFreight      = 0.3;    // 6. Time to pick up freight element
-    public static double offsetEjectFreight  = 0.1;    // 7. Offset to eject freight after reaching shipping hub pos
+    public static double offsetEjectFreight  = -0.1;    // 7. Offset to eject freight after reaching shipping hub pos
     public static double offsetIntakeFreight = -0.2;    // 8. Offset to pickup freight before reaching warehouse pos
-    public static double offsetLowerToPickup = -0.1;    // 9. Offset to lower to pickup position (Start to do this after retracting from drop-off position)
+    public static double offsetLowerToPickup = -0.3;    // 9. Offset to lower to pickup position (Start to do this after retracting from drop-off position)
     public static double offsetRaiseToDropOff = -0.2;   // 10. Offset to raise to drop-off position (Start to do this after retracting from pickup position)
 
     public static boolean runProfiling = false;
@@ -210,9 +210,9 @@ public class Mrv_Autonomous extends LinearOpMode {
 
         telemetry.update();
         mrvDashboard.sendTelemetryPacket(mrvDashboardTelemetryPacket);
-        mrvDashboardTelemetryPacket.clearLines();
 
         waitForStart();
+        mrvDashboardTelemetryPacket.clearLines();
 
         // 1. Calculate Dropoff Level
         mrvWarehouseLevel = MrvGetWarehouseLevel(MrvAllianceField.BLUE);
@@ -287,6 +287,20 @@ public class Mrv_Autonomous extends LinearOpMode {
                     bottom = recognition.getBottom();
                     mdpt = (left + right) / 2;
 
+                    bDuckFound = true;
+                    telemetry.addLine(String.format("%d. Object (%d:) ", iTeleCt++, i) + recognition.getLabel());
+                    telemetry.addLine(String.format("%d. Confidence: %.3f", iTeleCt++, recognition.getConfidence()));
+                    telemetry.addLine(String.format("%d. BBox (%d), (%.03f, %.03f)  (%.03f, %.03f)", iTeleCt++, i, left, top, right, bottom));
+                    telemetry.addLine(String.format("%d. BBox midpt (%d),  (%.03f)", iTeleCt++, i, mdpt));
+                    telemetry.addLine(String.format("%d. Image Size (%d), Width: %d; Height: %d ", iTeleCt++, i, recognition.getImageWidth(), recognition.getImageHeight()));
+                    telemetry.update();
+
+                    mrvDashboardTelemetryPacket.addLine(String.format("%d. Object (%d:) ", iTeleCt++, i) + recognition.getLabel());
+                    mrvDashboardTelemetryPacket.addLine(String.format("%d. Confidence: %.3f", iTeleCt++, recognition.getConfidence()));
+                    mrvDashboardTelemetryPacket.addLine(String.format("%d. BBox (%d), (%.03f, %.03f)  (%.03f, %.03f)", iTeleCt++, i, left, top, right, bottom));
+                    mrvDashboardTelemetryPacket.addLine(String.format("%d. BBox midpt (%d),  (%.03f)", iTeleCt++, i, mdpt));
+                    mrvDashboardTelemetryPacket.addLine(String.format("%d. Image Size (%d), Width: %d; Height: %d ", iTeleCt++, i, recognition.getImageWidth(), recognition.getImageHeight()));
+
                     //if (recognition.getLabel()== "Duck") {
                     if (recognition.getLabel() == "Aztechs_TSE" && recognition.getConfidence() > 0.8) {
                         if (marvyn.FirstPosMin <= mdpt && mdpt <= marvyn.FirstPosMax) {
@@ -296,20 +310,6 @@ public class Mrv_Autonomous extends LinearOpMode {
                             PyraPos = 2;
                             dWarehouseLevelToPickup = dFromLevel2ToPickup;
                         }
-
-                        bDuckFound = true;
-                        telemetry.addLine(String.format("%d. Object (%d:) ", iTeleCt++, i) + recognition.getLabel());
-                        telemetry.addLine(String.format("%d. Confidence: %.3f", iTeleCt++, recognition.getConfidence()));
-                        telemetry.addLine(String.format("%d. BBox (%d), (%.03f, %.03f)  (%.03f, %.03f)", iTeleCt++, i, left, top, right, bottom));
-                        telemetry.addLine(String.format("%d. BBox midpt (%d),  (%.03f)", iTeleCt++, i, mdpt));
-                        telemetry.addLine(String.format("%d. Image Size (%d), Width: %d; Height: %d ", iTeleCt++, i, recognition.getImageWidth(), recognition.getImageHeight()));
-                        telemetry.update();
-
-                        mrvDashboardTelemetryPacket.addLine(String.format("%d. Object (%d:) ", iTeleCt++, i) + recognition.getLabel());
-                        mrvDashboardTelemetryPacket.addLine(String.format("%d. Confidence: %.3f", iTeleCt++, recognition.getConfidence()));
-                        mrvDashboardTelemetryPacket.addLine(String.format("%d. BBox (%d), (%.03f, %.03f)  (%.03f, %.03f)", iTeleCt++, i, left, top, right, bottom));
-                        mrvDashboardTelemetryPacket.addLine(String.format("%d. BBox midpt (%d),  (%.03f)", iTeleCt++, i, mdpt));
-                        mrvDashboardTelemetryPacket.addLine(String.format("%d. Image Size (%d), Width: %d; Height: %d ", iTeleCt++, i, recognition.getImageWidth(), recognition.getImageHeight()));
                         i++;
                         break;
                     }
@@ -380,8 +380,8 @@ public class Mrv_Autonomous extends LinearOpMode {
         mrvBlue2 = marvyn.mecanumDrive.trajectorySequenceBuilder(blue_2_pose_estimate)
 
             // Step 1: Drop off pre-loaded Freight and return to Warehouse Enter pos
-                .lineToLinearHeading(blue_2_shipping_hub_pos)
-                .UNSTABLE_addTemporalMarkerOffset(offsetEjectFreight,() -> {  // Runs 0.1 seconds into the WaitSeconds call and keeps the servos on for 0.4s
+                .lineToLinearHeading(blue_2_shipping_hub_pos,marvyn.mecanumDrive.getVelocityConstraint(slower_speed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), marvyn.mecanumDrive.getAccelerationConstraint(slower_accel))
+                .UNSTABLE_addTemporalMarkerOffset(offsetEjectFreight, () -> {  // Runs 0.1 seconds into the WaitSeconds call and keeps the servos on for 0.4s
                     marvyn.Claw_Left.setPower(-0.5);
                     marvyn.Claw_Right.setPower(-0.5);
                 })
@@ -411,7 +411,7 @@ public class Mrv_Autonomous extends LinearOpMode {
                     marvyn.Claw_Left.setPower(0);
                     marvyn.Claw_Right.setPower(0);
                 })
-                .lineToLinearHeading(blue_warehouse_enter_pos, marvyn.mecanumDrive.getVelocityConstraint(slower_speed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), marvyn.mecanumDrive.getAccelerationConstraint(slower_accel))
+                .lineToLinearHeading(blue_warehouse_enter_pos)
                 .UNSTABLE_addTemporalMarkerOffset(offsetRaiseToDropOff, () -> { // Begin Raising DaWinchi 0.5 seconds before reaching warehouse enter pos and keep it running for 0.5 s after (total time = 1s)
                     marvyn.Wristy.setPosition(Wrist_Dropoff_Pos);
                     marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, -0.5);
@@ -420,7 +420,7 @@ public class Mrv_Autonomous extends LinearOpMode {
                 .addTemporalMarker(()->{
                     marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
                 })
-                .lineToLinearHeading(blue_2_shipping_hub_pos)
+                .lineToLinearHeading(blue_2_shipping_hub_pos,marvyn.mecanumDrive.getVelocityConstraint(slower_speed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), marvyn.mecanumDrive.getAccelerationConstraint(slower_accel))
                 .UNSTABLE_addTemporalMarkerOffset(offsetEjectFreight,() -> {  // Runs 0.1 seconds into the WaitSeconds call and keeps the servos on for 0.4s
                     marvyn.Claw_Left.setPower(-0.5);
                     marvyn.Claw_Right.setPower(-0.5);
@@ -435,7 +435,7 @@ public class Mrv_Autonomous extends LinearOpMode {
                     marvyn.Wristy.setPosition(Wrist_Pickup_Pos);
                     marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0.5);
                 })
-                .waitSeconds(dWarehouseLevelToPickup)
+                .waitSeconds(dFromLevel2ToPickup)
                 .addTemporalMarker(() -> {
                     marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
                 })
@@ -451,7 +451,7 @@ public class Mrv_Autonomous extends LinearOpMode {
                     marvyn.Claw_Left.setPower(0);
                     marvyn.Claw_Right.setPower(0);
                 })
-                .lineToLinearHeading(blue_warehouse_enter_pos, marvyn.mecanumDrive.getVelocityConstraint(slower_speed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), marvyn.mecanumDrive.getAccelerationConstraint(slower_accel))
+                .lineToLinearHeading(blue_warehouse_enter_pos)
                 .UNSTABLE_addTemporalMarkerOffset(offsetRaiseToDropOff, () -> { // Begin Raising DaWinchi 0.5 seconds before reaching warehouse enter pos and keep it running for 0.5 s after (total time = 1s)
                     marvyn.Wristy.setPosition(Wrist_Dropoff_Pos);
                     marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, -0.5);
@@ -460,7 +460,7 @@ public class Mrv_Autonomous extends LinearOpMode {
                 .addTemporalMarker(()->{
                     marvyn.setPower(Mrv_Robot.MrvMotors.DA_WINCHI, 0);
                 })
-                .lineToLinearHeading(blue_2_shipping_hub_pos)
+                .lineToLinearHeading(blue_2_shipping_hub_pos,marvyn.mecanumDrive.getVelocityConstraint(slower_speed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), marvyn.mecanumDrive.getAccelerationConstraint(slower_accel))
                 .UNSTABLE_addTemporalMarkerOffset(offsetEjectFreight,() -> {  // Runs 0.1 seconds into the WaitSeconds call and keeps the servos on for 0.4s
                     marvyn.Claw_Left.setPower(-0.5);
                     marvyn.Claw_Right.setPower(-0.5);
