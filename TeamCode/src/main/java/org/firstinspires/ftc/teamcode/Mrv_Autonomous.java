@@ -138,10 +138,10 @@ public class Mrv_Autonomous extends LinearOpMode {
     //    offset = when to start (either before or after previous)
     public static double dFromLevel0ToPickup = 0.2;    // 1. Time to lower from level 0 -> Pickup
     public static double dFromLevel1ToPickup = 0.3;    // 2. Time to lower from level 1 -> Pickup
-    public static double dFromLevel2ToPickup = 0.36;    // 3. Time to lower from level 2 -> Pickup
+    public static double dFromLevel2ToPickup = 0.35;    // 3. Time to lower from level 2 -> Pickup
     public static double dRaiseToLevel2      = 0.8;    // 4. Time to raise from Pickup -> level2
     public static double dEjectFreight       = 1;    // 5. Time to drop off freight element
-    public static double dIntakeFreight      = 0.3;    // 6. Time to pick up freight element
+    public static double dIntakeFreight      = 0.4;    // 6. Time to pick up freight element
     public static double offsetEjectFreight  = -0.1;    // 7. Offset to eject freight after reaching shipping hub pos
     public static double offsetIntakeFreight = -0.2;    // 8. Offset to pickup freight before reaching warehouse pos
     public static double offsetLowerToPickup = -0.3;    // 9. Offset to lower to pickup position (Start to do this after retracting from drop-off position)
